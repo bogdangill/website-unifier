@@ -7,15 +7,10 @@ import { deleteAsync } from "del";
 import GulpZip from "gulp-zip";
 import pack from "./package.json" assert {type: "json"};
 import gulpPurgeCSS from "gulp-purgecss";
-
-import * as fs from "node:fs";
 import through2 from "through2";
-import { dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import path from "node:path";
+import { changeStylesLink } from "./helpers.js";
 
 const sass = gulpSass(sassComp);
 
@@ -58,23 +53,6 @@ function styles() {
     }
 }
 
-function changeStylesLink(filePath, fileName) {
-    let htmlFile = fs.readFileSync(filePath, {encoding: 'utf-8'});
-    let fileContentArr = htmlFile.split('\n');
-
-    fileContentArr.forEach(item => {
-        if (item.match('./css/styles.css')) {
-            let itemIndex = fileContentArr.indexOf(item);
-            fileContentArr[itemIndex] = '    <link rel="stylesheet" href="styles.css">';
-        }
-    })
-
-    if (!fs.existsSync(`${__dirname}/dist`)) {
-        fs.mkdirSync(`${__dirname}/dist`)
-    }
-    fs.writeFileSync(`./dist/${fileName}`, fileContentArr.join('\n'));
-}
-
 function html() {
     if (process.argv.includes('build')) {
         return gulp.src('./src/*.html')
@@ -83,7 +61,7 @@ function html() {
     } else {
         return gulp.src('./src/*.html')
             .pipe(through2.obj((file, enc, cb) => {
-                changeStylesLink(file.path, path.basename(file.path));
+                changeStylesLink(file.path, path.basename(file.path))
                 cb()
             }))
             .pipe(gulp.dest('./dist'))
