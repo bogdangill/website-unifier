@@ -11,7 +11,7 @@ import through2 from "through2";
 import imagemin, {optipng} from "gulp-imagemin";
 
 import path from "node:path";
-import { changePaths } from "./helpers.js";
+import { changeCompanyName, changePaths } from "./helpers.js";
 
 const sass = gulpSass(sassComp);
 
@@ -68,16 +68,19 @@ function html() {
             .pipe(gulp.dest('./dist'))
     } else {
         return gulp.src('./src/*.html')
-            .pipe(through2.obj((file, enc, cb) => {
-                changePaths(file.path, path.basename(file.path), src.stylesCompiled, src.images);
-                cb()
-            }))
             .pipe(gulp.dest('./dist'))
             .pipe(browserSync.stream())
     }
 }
 
-gulp.task('test', html);
+function changeText() {
+    return gulp.src('./src/*.html')
+        .pipe(changePaths())
+        .pipe(changeCompanyName())
+        .pipe(gulp.dest('./dist'))
+}
+
+gulp.task('test', changeText);
 
 function scripts() {
     if (process.argv.includes('build')) {

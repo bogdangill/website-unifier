@@ -1,29 +1,40 @@
-import * as fs from "node:fs";
-import { dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 import * as cheerio from "cheerio";
 import { src } from "./gulpfile.js";
+import randomWord from "random-word";
+import pack from "./package.json" assert {type: "json"};
+import through2 from "through2";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+export function changePaths() {
+    return through2.obj((file, _, cb) => {
+        if (file.isBuffer) {
+            const $ = cheerio.loadBuffer(file.contents);
 
-export function changePaths(filePath, fileName) {
-    const htmlFile = fs.readFileSync(filePath);
-    const $ = cheerio.loadBuffer(htmlFile);
+            $(`link[href="./${src.stylesCompiled}"]`).attr('href', src.cssFileName);
 
-    $(`link[href="./${src.stylesCompiled}"]`).attr('href', src.cssFileName);
+            $('img').each((i, el) => {
+                let currentSrc = $(el).attr('src');
 
-    $('img').each((i, el) => {
-        let currentSrc = $(el).attr('src');
+                if (currentSrc.match(src.images)) {
+                    let imageName = currentSrc.split('/').pop();
+                    $(el).attr('src', `images/${imageName}`);
+                }
+            })
 
-        if (currentSrc.match(src.images)) {
-            let imageName = currentSrc.split('/').pop();
-            $(el).attr('src', `images/${imageName}`);
+            file.contents = Buffer.from($.html());
         }
-    })
 
-    if (!fs.existsSync(`${__dirname}/dist`)) {
-        fs.mkdirSync(`${__dirname}/dist`)
-    }
-    fs.writeFileSync(`./dist/${fileName}`, $.html());
+        cb(null, file)
+    })
+}
+
+export function changeCompanyName() {
+    return through2.obj((file, _, cb) => {
+        if (file.isBuffer()) {
+            const content = file.contents.toString('utf8');
+            const modifiedContent = content.replace(pack.websiteName, randomWord().toUpperCase());
+            file.contents = Buffer.from(modifiedContent);
+        }  
+
+        cb(null, file)
+    })
 }

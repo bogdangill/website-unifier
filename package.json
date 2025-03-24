@@ -1,5 +1,6 @@
 {
 	"archiveName": "GB-white-game-1-1",
+	"websiteName": "Fun Game",
 	"name": "unique-boilerplate",
 	"version": "0.0.1",
 	"description": "boilerplate to unique websites",
@@ -33,9 +34,11 @@
 		"del": "^8.0.0",
 		"gulp": "^5.0.0",
 		"gulp-csso": "^4.0.1",
+		"gulp-imagemin": "^9.1.0",
 		"gulp-purgecss": "^7.0.2",
 		"gulp-sass": "^6.0.1",
 		"gulp-zip": "^5.1.0",
+		"random-word": "^3.0.0",
 		"sass": "^1.86.0",
 		"through2": "^4.0.2"
 	}
