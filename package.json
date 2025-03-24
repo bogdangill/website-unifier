@@ -16,14 +16,14 @@
 			"images": "assets/img/",
 			"styles": "css/styles.scss",
 			"stylesCompiled": "css/styles.css",
-			"cssFileName": "styles",
+			"cssFileName": "styles.css",
 			"scripts": "js/script.js"
 		},
 		{
 			"images": "images/",
 			"styles": "styles/main.scss",
 			"stylesCompiled": "styles/main.css",
-			"cssFileName": "main",
+			"cssFileName": "main.css",
 			"scripts": "scripts/*.js"
 		}
 	],

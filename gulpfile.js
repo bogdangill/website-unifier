@@ -8,6 +8,7 @@ import GulpZip from "gulp-zip";
 import pack from "./package.json" assert {type: "json"};
 import gulpPurgeCSS from "gulp-purgecss";
 import through2 from "through2";
+import imagemin, {optipng} from "gulp-imagemin";
 
 import path from "node:path";
 import { changePaths } from "./helpers.js";
@@ -18,15 +19,17 @@ const SRC_TYPE = {
     old: pack.sourcePaths[0],
     new: pack.sourcePaths[1]
 };
-const src = SRC_TYPE.old;
+
+export const src = SRC_TYPE.new;
+
 const gulpSrc = {
-    images: `./src/${src.images}*.+(png|jpg|gif|ico|svg|webp)`,
+    images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
     styles: `./src/${src.styles}`,
     scripts: `./src/${src.scripts}`
 };
 
 function clean() {
-    return deleteAsync('./build')
+    return deleteAsync(['./build', './dist'])
 }
 function archivate() {
     return gulp.src('./dist/**', {encoding: false})
@@ -43,7 +46,7 @@ function styles() {
             }).on('error', sass.logError))
             .pipe(csso())
             .pipe(gulp.dest(`./dist`))
-            .pipe(gulp.src(`./dist/${src.cssFileName}.css`))
+            .pipe(gulp.src(`./dist/${src.cssFileName}`))
             .pipe(gulpPurgeCSS({
                 content: ['./dist/*.html']
             }))
@@ -100,13 +103,18 @@ function browsersync() {
 
 function images() {
     if (process.argv.includes('build')) {
-        //хз мб добавлю сжатие картинок чтоб сайты на проверке не грузились дольше секунды
         return gulp.src(gulpSrc.images, {encoding: false})
             .pipe(gulp.dest('./dist/images'))
-            .pipe(browserSync.stream())
     } else {
         return gulp.src(gulpSrc.images, {encoding: false})
+            .pipe(imagemin(
+                [optipng({optimizationLevel: 5}),],
+                {
+                    verbose: true
+                }
+            ))
             .pipe(gulp.dest('./dist/images'))
+            .pipe(browserSync.stream())
     }
 }
 
