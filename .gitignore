@@ -1,0 +1,10 @@
+# Folders
+/node_modules
+/dist
+/build
+/src/**
+
+# Logs
+/.vscode
+/.idea
+.DS_Store

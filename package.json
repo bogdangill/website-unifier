@@ -1,0 +1,39 @@
+{
+	"archiveName": "GB-white-game-1-1",
+	"name": "unique-boilerplate",
+	"version": "0.0.1",
+	"description": "boilerplate to unique websites",
+	"main": "gulpfile.js",
+	"scripts": {
+		"start": "gulp dev",
+		"build": "gulp build"
+	},
+	"type": "module",
+	"author": "bogdangill",
+	"license": "ISC",
+	"sourcePaths": [
+		{
+			"images": "./src/assets/img/*.{png, jpeg, jpg, webp, svg}",
+			"styles": "./src/css/styles.scss",
+			"cssFileName": "styles",
+			"scripts": "./src/js/script.js"
+		},
+		{
+			"images": "./src/images/**/*.{png, jpeg, jpg, webp, svg}",
+			"styles": "./src/styles/main.scss",
+			"cssFileName": "main",
+			"scripts": "./src/scripts/*.js"
+		}
+	],
+	"devDependencies": {
+		"browser-sync": "^3.0.3",
+		"del": "^8.0.0",
+		"gulp": "^5.0.0",
+		"gulp-csso": "^4.0.1",
+		"gulp-purgecss": "^7.0.2",
+		"gulp-sass": "^6.0.1",
+		"gulp-zip": "^5.1.0",
+		"sass": "^1.86.0",
+		"through2": "^4.0.2"
+	}
+}
