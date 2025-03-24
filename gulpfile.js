@@ -110,14 +110,14 @@ function images() {
     if (process.argv.includes('build')) {
         return gulp.src(gulpSrc.images, {encoding: false})
             .pipe(gulp.dest('./dist/images'))
-    } else {
-        return gulp.src(gulpSrc.images, {encoding: false})
             .pipe(imagemin(
                 [optipng({optimizationLevel: 5}),],
                 {
                     verbose: true
                 }
             ))
+    } else {
+        return gulp.src(gulpSrc.images, {encoding: false})
             .pipe(gulp.dest('./dist/images'))
             .pipe(browserSync.stream())
     }
