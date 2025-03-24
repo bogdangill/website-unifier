@@ -28,11 +28,22 @@ export function changePaths() {
 }
 
 export function changeCompanyName() {
+    const newCompanyName = randomWord().toUpperCase();
+
     return through2.obj((file, _, cb) => {
         if (file.isBuffer()) {
             const content = file.contents.toString('utf8');
-            const modifiedContent = content.replace(pack.websiteName, randomWord().toUpperCase());
-            file.contents = Buffer.from(modifiedContent);
+            const contentArr = content.split('\n');
+            const newContentArr = [];
+            
+            contentArr.forEach(item => {
+                if (item.match(pack.websiteName)) {
+                    item = item.replace(pack.websiteName, newCompanyName);
+                }
+                newContentArr.push(item);
+            });
+
+            file.contents = Buffer.from(newContentArr.join('\n'));
         }  
 
         cb(null, file)

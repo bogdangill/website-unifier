@@ -68,6 +68,8 @@ function html() {
             .pipe(gulp.dest('./dist'))
     } else {
         return gulp.src('./src/*.html')
+            .pipe(changePaths())
+            .pipe(changeCompanyName())
             .pipe(gulp.dest('./dist'))
             .pipe(browserSync.stream())
     }
@@ -80,7 +82,7 @@ function changeText() {
         .pipe(gulp.dest('./dist'))
 }
 
-gulp.task('test', changeText);
+gulp.task('test', html);
 
 function scripts() {
     if (process.argv.includes('build')) {
