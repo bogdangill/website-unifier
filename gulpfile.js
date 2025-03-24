@@ -10,7 +10,7 @@ import gulpPurgeCSS from "gulp-purgecss";
 import through2 from "through2";
 
 import path from "node:path";
-import { changeStylesLink } from "./helpers.js";
+import { changePaths } from "./helpers.js";
 
 const sass = gulpSass(sassComp);
 
@@ -19,6 +19,11 @@ const SRC_TYPE = {
     new: pack.sourcePaths[1]
 };
 const src = SRC_TYPE.old;
+const gulpSrc = {
+    images: `./src/${src.images}*.+(png|jpg|gif|ico|svg|webp)`,
+    styles: `./src/${src.styles}`,
+    scripts: `./src/${src.scripts}`
+};
 
 function clean() {
     return deleteAsync('./build')
@@ -31,7 +36,7 @@ function archivate() {
 
 function styles() {
     if (process.argv.includes('build')) {
-        return gulp.src(src.styles)
+        return gulp.src(gulpSrc.styles)
             // здесь будет уникализация цсс классов и жс атрибутов/id
             .pipe(sass({
                 style: 'compressed'
@@ -44,7 +49,7 @@ function styles() {
             }))
             .pipe(gulp.dest('./dist'))
     } else {
-        return gulp.src(src.styles, {sourcemaps: true})
+        return gulp.src(gulpSrc.styles, {sourcemaps: true})
             .pipe(sass({
                 style: 'expanded'
             }).on('error', sass.logError))
@@ -61,7 +66,7 @@ function html() {
     } else {
         return gulp.src('./src/*.html')
             .pipe(through2.obj((file, enc, cb) => {
-                changeStylesLink(file.path, path.basename(file.path))
+                changePaths(file.path, path.basename(file.path), src.stylesCompiled, src.images);
                 cb()
             }))
             .pipe(gulp.dest('./dist'))
@@ -69,13 +74,15 @@ function html() {
     }
 }
 
+gulp.task('test', html);
+
 function scripts() {
     if (process.argv.includes('build')) {
-        return gulp.src(src.scripts)
+        return gulp.src(gulpSrc.scripts)
             // здесь будет уникализация классов и жс атрибутов/id
             .pipe(gulp.dest('./dist/js'))
     } else {
-        return gulp.src(src.scripts, {sourcemaps: true})
+        return gulp.src(gulpSrc.scripts, {sourcemaps: true})
             .pipe(gulp.dest('./dist/js'))
             .pipe(browserSync.stream());
     }
@@ -94,20 +101,20 @@ function browsersync() {
 function images() {
     if (process.argv.includes('build')) {
         //хз мб добавлю сжатие картинок чтоб сайты на проверке не грузились дольше секунды
-        return gulp.src(src.images)
+        return gulp.src(gulpSrc.images, {encoding: false})
             .pipe(gulp.dest('./dist/images'))
             .pipe(browserSync.stream())
     } else {
-        return gulp.src(src.images)
+        return gulp.src(gulpSrc.images, {encoding: false})
             .pipe(gulp.dest('./dist/images'))
     }
 }
 
 function observer() {
-    gulp.watch(src.styles, styles).on('change', browserSync.reload);
+    gulp.watch(gulpSrc.styles, styles).on('change', browserSync.reload);
     gulp.watch("./src/*.html", html).on('change', browserSync.reload);
-    gulp.watch(src.scripts, scripts).on('change', browserSync.reload);
-    gulp.watch(src.images, images).on('change', browserSync.reload);
+    gulp.watch(gulpSrc.scripts, scripts).on('change', browserSync.reload);
+    gulp.watch(gulpSrc.images, images).on('change', browserSync.reload);
 }
 
 const compileDist = gulp.parallel(styles, scripts, images, html);

@@ -13,20 +13,23 @@
 	"license": "ISC",
 	"sourcePaths": [
 		{
-			"images": "./src/assets/img/*.{png, jpeg, jpg, webp, svg}",
-			"styles": "./src/css/styles.scss",
+			"images": "assets/img/",
+			"styles": "css/styles.scss",
+			"stylesCompiled": "css/styles.css",
 			"cssFileName": "styles",
-			"scripts": "./src/js/script.js"
+			"scripts": "js/script.js"
 		},
 		{
-			"images": "./src/images/**/*.{png, jpeg, jpg, webp, svg}",
-			"styles": "./src/styles/main.scss",
+			"images": "images/",
+			"styles": "styles/main.scss",
+			"stylesCompiled": "styles/main.css",
 			"cssFileName": "main",
-			"scripts": "./src/scripts/*.js"
+			"scripts": "scripts/*.js"
 		}
 	],
 	"devDependencies": {
 		"browser-sync": "^3.0.3",
+		"cheerio": "^1.0.0",
 		"del": "^8.0.0",
 		"gulp": "^5.0.0",
 		"gulp-csso": "^4.0.1",
