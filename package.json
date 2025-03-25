@@ -1,5 +1,5 @@
 {
-	"archiveName": "GB-white-game-1-1",
+	"archiveName": "DE-white-game-1-4-1",
 	"websiteName": "Fun Game",
 	"name": "unique-boilerplate",
 	"version": "0.0.1",
@@ -29,6 +29,7 @@
 		}
 	],
 	"devDependencies": {
+		"@faker-js/faker": "^9.6.0",
 		"browser-sync": "^3.0.3",
 		"cheerio": "^1.0.0",
 		"del": "^8.0.0",
@@ -38,6 +39,7 @@
 		"gulp-purgecss": "^7.0.2",
 		"gulp-sass": "^6.0.1",
 		"gulp-zip": "^5.1.0",
+		"libphonenumber-js": "^1.12.6",
 		"random-word": "^3.0.0",
 		"sass": "^1.86.0",
 		"through2": "^4.0.2"

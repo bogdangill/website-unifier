@@ -3,6 +3,8 @@ import { src } from "./gulpfile.js";
 import randomWord from "random-word";
 import pack from "./package.json" assert {type: "json"};
 import through2 from "through2";
+import {findPhoneNumbersInText, isSupportedCountry, getCountryCallingCode, isValidPhoneNumber} from "libphonenumber-js";
+import { faker } from "@faker-js/faker";
 
 export function changePaths() {
     return through2.obj((file, _, cb) => {
@@ -21,6 +23,54 @@ export function changePaths() {
             })
 
             file.contents = Buffer.from($.html());
+        }
+
+        cb(null, file)
+    })
+}
+
+export function changePhone() {
+    const websiteLocale = pack.archiveName.split('-').shift();
+    let newPhoneNum;
+
+    if (isSupportedCountry(websiteLocale)) {
+        const countryCode = getCountryCallingCode(websiteLocale);
+        const randomPhoneNumber = faker.phone.number({style: 'national'});
+        const generatedPhoneNum = `+${countryCode} ${randomPhoneNumber}`;
+
+        if (isValidPhoneNumber(generatedPhoneNum)) {
+            newPhoneNum = generatedPhoneNum;
+        }
+    } else {
+        newPhoneNum = '+78005553535';
+    }
+
+    return through2.obj((file, _, cb) => {
+        if (file.isBuffer()) {
+            const content = file.contents.toString('utf8');
+            const contentArr = content.split('\n');
+            const newContentArr = [];
+            const newContentArr2 = [];
+
+            contentArr.forEach(item => {
+                if (item.match(/\+\d{1,11}/)) {
+                    if (findPhoneNumbersInText(item)) {
+                        const filteredString = item.trim().split('').filter(i => !i.match(' ')).join('');
+                        item = filteredString;
+                    }
+                }
+                newContentArr.push(item);
+            })
+            newContentArr.forEach(item => {
+                if (item.match(/\+\d{1,11}/)) {
+                    if (findPhoneNumbersInText(item)) {
+                        item = item.replace(/\+\d{1,12}/, newPhoneNum)
+                    }
+                }
+                newContentArr2.push(item)
+            })
+
+            file.contents = Buffer.from(newContentArr2.join('\n'));
         }
 
         cb(null, file)

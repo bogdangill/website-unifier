@@ -11,7 +11,7 @@ import through2 from "through2";
 import imagemin, {optipng} from "gulp-imagemin";
 
 import path from "node:path";
-import { changeCompanyName, changePaths } from "./helpers.js";
+import { changeCompanyName, changePaths, changePhone } from "./helpers.js";
 
 const sass = gulpSass(sassComp);
 
@@ -75,14 +75,14 @@ function html() {
     }
 }
 
-function changeText() {
+function test() {
     return gulp.src('./src/*.html')
-        .pipe(changePaths())
-        .pipe(changeCompanyName())
+        .pipe(changePhone())
+        // .pipe(changeCompanyName())
         .pipe(gulp.dest('./dist'))
 }
 
-gulp.task('test', html);
+gulp.task('test', test);
 
 function scripts() {
     if (process.argv.includes('build')) {
