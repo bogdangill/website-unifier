@@ -17,8 +17,8 @@ export function changePaths() {
                 let currentSrc = $(el).attr('src');
 
                 if (currentSrc.match(src.images)) {
-                    let imageName = currentSrc.split('/').pop();
-                    $(el).attr('src', `images/${imageName}`);
+                    let imagePath = currentSrc.split('/').splice(-3).join('/');
+                    $(el).attr('src', `${imagePath}`);
                 }
             })
 
