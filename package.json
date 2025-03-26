@@ -1,6 +1,6 @@
 {
-	"archiveName": "DE-white-game-1-4-1",
-	"websiteName": "Fun Game",
+	"archiveName": "CA-white-game-1-4-1",
+	"websiteName": "Game Spirit",
 	"name": "unique-boilerplate",
 	"version": "0.0.1",
 	"description": "boilerplate to unique websites",
@@ -14,13 +14,15 @@
 	"license": "ISC",
 	"sourcePaths": [
 		{
+			"type": "old",
 			"images": "assets/img/",
 			"styles": "css/styles.scss",
 			"stylesCompiled": "css/styles.css",
 			"cssFileName": "styles.css",
-			"scripts": "js/script.js"
+			"scripts": "**/script.js"
 		},
 		{
+			"type": "new",
 			"images": "images/",
 			"styles": "styles/main.scss",
 			"stylesCompiled": "styles/main.css",

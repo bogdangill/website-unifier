@@ -4,7 +4,7 @@ import randomWord from "random-word";
 import pack from "./package.json" assert {type: "json"};
 import through2 from "through2";
 import {findPhoneNumbersInText, isSupportedCountry, getCountryCallingCode, isValidPhoneNumber} from "libphonenumber-js";
-import { faker } from "@faker-js/faker";
+import { Faker, faker } from "@faker-js/faker";
 
 export function changePaths() {
     return through2.obj((file, _, cb) => {
@@ -12,13 +12,19 @@ export function changePaths() {
             const $ = cheerio.loadBuffer(file.contents);
 
             $(`link[href="./${src.stylesCompiled}"]`).attr('href', src.cssFileName);
+            $(`script[src="./${src.scripts}"]`).attr('src', 'scripts/script.js')
 
             $('img').each((i, el) => {
                 let currentSrc = $(el).attr('src');
 
                 if (currentSrc.match(src.images)) {
-                    let imagePath = currentSrc.split('/').splice(-3).join('/');
-                    $(el).attr('src', `${imagePath}`);
+                    if (src.type === 'new') {
+                        let imagePath = currentSrc.split('/').splice(-3).join('/');
+                        $(el).attr('src', `${imagePath}`);
+                    } else {
+                        let imageName = currentSrc.split('/').pop();
+                        $(el).attr('src', `images/${imageName}`);
+                    }
                 }
             })
 
@@ -38,12 +44,11 @@ export function changePhone() {
         const randomPhoneNumber = faker.phone.number({style: 'national'});
         const generatedPhoneNum = `+${countryCode} ${randomPhoneNumber}`;
 
-        if (isValidPhoneNumber(generatedPhoneNum)) {
-            newPhoneNum = generatedPhoneNum;
-        }
+        newPhoneNum = generatedPhoneNum;
     } else {
         newPhoneNum = '+78005553535';
     }
+    console.log(newPhoneNum);
 
     return through2.obj((file, _, cb) => {
         if (file.isBuffer()) {
@@ -56,7 +61,7 @@ export function changePhone() {
                 if (item.match(/\+\d{1,11}/)) {
                     if (findPhoneNumbersInText(item)) {
                         const filteredString = item.trim().split('').filter(i => !i.match(' ')).join('');
-                        item = filteredString;
+                        item = filteredString.replace(/([A-Z]|[.,!?;:])/g, ' $1').trim();
                     }
                 }
                 newContentArr.push(item);
@@ -87,8 +92,8 @@ export function changeCompanyName() {
             const newContentArr = [];
             
             contentArr.forEach(item => {
-                if (item.match(pack.websiteName)) {
-                    item = item.replace(pack.websiteName, newCompanyName);
+                if (item.includes(pack.websiteName)) {
+                    item = item.replaceAll(pack.websiteName, newCompanyName);
                 }
                 newContentArr.push(item);
             });
