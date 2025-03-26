@@ -41,14 +41,17 @@ export function changePhone() {
 
     if (isSupportedCountry(websiteLocale)) {
         const countryCode = getCountryCallingCode(websiteLocale);
-        const randomPhoneNumber = faker.phone.number({style: 'national'});
-        const generatedPhoneNum = `+${countryCode} ${randomPhoneNumber}`;
+        let generatedPhoneNum = `+${countryCode} ${faker.phone.number({style: 'national'})}`;
 
         newPhoneNum = generatedPhoneNum;
+
+        do {
+            generatedPhoneNum = `+${countryCode} ${faker.phone.number({style: 'national'})}`
+        } while (!isValidPhoneNumber(newPhoneNum, websiteLocale));
+
     } else {
-        newPhoneNum = '+78005553535';
+        console.error("для данной страны не может быть сгенерирован автоматический номер телефона")
     }
-    console.log(newPhoneNum);
 
     return through2.obj((file, _, cb) => {
         if (file.isBuffer()) {
