@@ -11,7 +11,7 @@ import through2 from "through2";
 import imagemin, {optipng} from "gulp-imagemin";
 
 import path from "node:path";
-import { changeCompanyName, changePaths, changePhone } from "./helpers.js";
+import { changeAddress, changeCompanyName, changePaths, changePhone } from "./helpers.js";
 
 const sass = gulpSass(sassComp);
 
@@ -20,7 +20,7 @@ const SRC_TYPE = {
     new: pack.sourcePaths[1]
 };
 
-export const src = SRC_TYPE.new;
+export const src = SRC_TYPE.old;
 
 const gulpSrc = {
     images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
@@ -31,10 +31,17 @@ const gulpSrc = {
 function clean() {
     return deleteAsync(['./build', './dist'])
 }
+function cleanSrc() {
+    return deleteAsync(['./src/**'])
+}
 function archivate() {
     return gulp.src('./dist/**', {encoding: false})
         .pipe(GulpZip(`${pack.archiveName}.zip`))
         .pipe(gulp.dest(`./build`))
+}
+function copyGames() {
+    return gulp.src('./src/games/**', {encoding: false})
+        .pipe(gulp.dest(`./dist/games`))
 }
 
 function styles() {
@@ -46,11 +53,11 @@ function styles() {
             }).on('error', sass.logError))
             .pipe(csso())
             .pipe(gulp.dest(`./dist`))
-            .pipe(gulp.src(`./dist/${src.cssFileName}`))
-            .pipe(gulpPurgeCSS({
-                content: ['./dist/*.html']
-            }))
-            .pipe(gulp.dest('./dist'))
+            // .pipe(gulp.src(`./dist/${src.cssFileName}`))
+            // .pipe(gulpPurgeCSS({
+            //     content: ['./dist/*.html']
+            // }))
+            // .pipe(gulp.dest('./dist'))
     } else {
         return gulp.src(gulpSrc.styles, {sourcemaps: true})
             .pipe(sass({
@@ -64,10 +71,13 @@ function styles() {
 function html() {
     if (process.argv.includes('build')) {
         return gulp.src('./src/*.html')
-            // здесь будет уникализация цсс классов в хтмл и жс атрибутов/id
+            .pipe(changePhone())
+            .pipe(changePaths())
+            .pipe(changeCompanyName())
             .pipe(gulp.dest('./dist'))
     } else {
         return gulp.src('./src/*.html')
+            .pipe(changePhone())
             .pipe(changePaths())
             .pipe(changeCompanyName())
             .pipe(gulp.dest('./dist'))
@@ -78,7 +88,6 @@ function html() {
 function test() {
     return gulp.src('./src/*.html')
         .pipe(changePhone())
-        // .pipe(changeCompanyName())
         .pipe(gulp.dest('./dist'))
 }
 
@@ -88,10 +97,10 @@ function scripts() {
     if (process.argv.includes('build')) {
         return gulp.src(gulpSrc.scripts)
             // здесь будет уникализация классов и жс атрибутов/id
-            .pipe(gulp.dest('./dist/js'))
+            .pipe(gulp.dest('./dist/scripts'))
     } else {
         return gulp.src(gulpSrc.scripts, {sourcemaps: true})
-            .pipe(gulp.dest('./dist/js'))
+            .pipe(gulp.dest('./dist/scripts'))
             .pipe(browserSync.stream());
     }
 }
@@ -124,13 +133,15 @@ function images() {
 }
 
 function observer() {
-    gulp.watch(gulpSrc.styles, styles).on('change', browserSync.reload);
+    gulp.watch("./src/css/**/*.scss", styles).on('change', browserSync.reload);
     gulp.watch("./src/*.html", html).on('change', browserSync.reload);
     gulp.watch(gulpSrc.scripts, scripts).on('change', browserSync.reload);
     gulp.watch(gulpSrc.images, images).on('change', browserSync.reload);
 }
 
-const compileDist = gulp.parallel(styles, scripts, images, html);
+const compileDist = gulp.parallel(styles, scripts, images, html, copyGames);
 
 gulp.task('dev', gulp.series(clean, compileDist, gulp.parallel(browsersync, observer)));
-gulp.task('build', gulp.series(clean, compileDist, archivate));
+gulp.task('build', gulp.series(clean, compileDist));
+
+gulp.task('cleansrc', cleanSrc);
