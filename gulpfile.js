@@ -14,6 +14,7 @@ import * as fs from "node:fs";
 import path from "node:path";
 
 import { changeCompanyName, changePaths, changePhone } from "./helpers.js";
+import { faker } from "@faker-js/faker";
 
 const sass = gulpSass(sassComp);
 
@@ -41,6 +42,11 @@ function archivate() {
         .pipe(GulpZip(`${pack.archiveName}.zip`))
         .pipe(gulp.dest(`./build`))
 }
+
+/**
+ * 
+ * @deprecated
+ */
 function copyGames() {
     return gulp.src('./src/games/**', {encoding: false})
         .pipe(gulp.dest(`./dist/games`))
@@ -87,38 +93,41 @@ function html() {
     }
 }
 
-async function test() {
-    const files = fs.readdirSync('src/');
-    const folders = files.filter(file => !path.extname(file));
-
-    const allGames = [
-        'Animals-Crush-Match-3',
-        'CARS',
-        'Frog-Super-Bubbles',
-        'Halloween-Match-3',
-        'Math-Game-For-Kids',
-        'Monsters-Match-3',
-        'Pops-Billiards',
-        'Scary-Run',
-        'Speed-Racer',
-        'Splishy-Fish'
-    ];
-
-    const usedGames = allGames.filter(game => folders.filter(folder => folder == game).toString());
-    const unusedGames = allGames;
-
-    for (let i of usedGames) {
-        for (let j of unusedGames) {
-            if (j == i) {
-                unusedGames.splice(unusedGames.indexOf(i), 1);
-            }
-        }
+class Games {
+    constructor() {
+        this.files = fs.readdirSync('src/');
+        this.folders = this.files.filter(file => !path.extname(file));
+        this.allGames = fs.readdirSync('games/').filter(file => !path.extname(file));
     }
 
-    console.log(unusedGames);
+    /** @description подойдет если болванка новая */
+    getUniqueListBasedOnSrc() {
+        const usedGames = this.allGames.filter(game => this.folders.filter(folder => folder == game).toString());
+        const unusedGames = Array.from(this.allGames);
+    
+        for (let i of usedGames) {
+            for (let j of unusedGames) {
+                if (j == i) {
+                    unusedGames.splice(unusedGames.indexOf(i), 1);
+                }
+            }
+        }
+    
+        const restGames = faker.helpers.uniqueArray(usedGames, 2);
+
+        return [...unusedGames, ...restGames]
+    }
+
+    /**@description подойдет если болванка одна и та же из итерации в итерацию */
+    giveRandomList() {
+        return faker.helpers.uniqueArray(this.allGames, 6);
+    }
 }
 
-gulp.task('test', test);
+gulp.task('test', (cb) => {
+    console.log(new Games().giveRandomList());
+    return cb(null)
+});
 
 function scripts() {
     if (process.argv.includes('build')) {
@@ -166,7 +175,7 @@ function observer() {
     gulp.watch(gulpSrc.images, images).on('change', browserSync.reload);
 }
 
-const compileDist = gulp.parallel(styles, scripts, images, html, copyGames);
+const compileDist = gulp.parallel(styles, scripts, images, html);
 
 gulp.task('dev', gulp.series(clean, compileDist, gulp.parallel(browsersync, observer)));
 gulp.task('build', gulp.series(clean, compileDist));

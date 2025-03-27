@@ -3,6 +3,7 @@
 /dist
 /build
 /src/**
+/games
 
 # Logs
 /.vscode
