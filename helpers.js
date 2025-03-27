@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { src } from "./gulpfile.js";
+import { Games, src } from "./gulpfile.js";
 import randomWord from "random-word";
 import pack from "./package.json" assert {type: "json"};
 import through2 from "through2";
@@ -10,10 +10,12 @@ export function changePaths() {
     return through2.obj((file, _, cb) => {
         if (file.isBuffer) {
             const $ = cheerio.loadBuffer(file.contents);
-
+            
+            //change main style href
             $(`link[href="./${src.stylesCompiled}"]`).attr('href', src.cssFileName);
-            $(`script[src="./${src.scripts}"]`).attr('src', 'scripts/script.js')
-
+            //change main script href
+            $(`script[src="./${src.scripts}"]`).attr('src', 'scripts/script.js');
+            //change images src href
             $('img').each((i, el) => {
                 let currentSrc = $(el).attr('src');
 
@@ -26,7 +28,22 @@ export function changePaths() {
                         $(el).attr('src', `images/${imageName}`);
                     }
                 }
-            })
+
+                const oldGamesArr = Games.gamesEnum.old;
+                const newGamesArr = Games.gamesEnum.new;
+
+                console.log(oldGamesArr, newGamesArr);
+
+                oldGamesArr.forEach((game, i) => {
+                    if (currentSrc.match(game)) {
+                        let imagePathArr = currentSrc.split('/');
+                        console.log(newGamesArr[i]);
+                        imagePathArr.splice(0, 1, newGamesArr[i]);
+                        let newPath = imagePathArr.join('/');
+                        $(el).attr('src', `games/${newPath}`);
+                    }
+                })
+            });
 
             file.contents = Buffer.from($.html());
         }
