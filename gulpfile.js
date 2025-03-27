@@ -94,6 +94,8 @@ function html() {
 }
 
 class Games {
+    gamesList = [];
+    
     constructor() {
         this.files = fs.readdirSync('src/');
         this.folders = this.files.filter(file => !path.extname(file));
@@ -101,7 +103,7 @@ class Games {
     }
 
     /** @description подойдет если болванка новая */
-    getUniqueListBasedOnSrc() {
+    giveUniqueCollection() {
         const usedGames = this.allGames.filter(game => this.folders.filter(folder => folder == game).toString());
         const unusedGames = Array.from(this.allGames);
     
@@ -114,18 +116,27 @@ class Games {
         }
     
         const restGames = faker.helpers.uniqueArray(usedGames, 2);
+        this.gamesList = [...unusedGames, ...restGames];
 
-        return [...unusedGames, ...restGames]
+        this.gamesList.forEach(game => {
+            return gulp.src(`./games/${game}/**`)
+                .pipe(gulp.dest(`./dist/games/${game}/`))
+        })
     }
 
     /**@description подойдет если болванка одна и та же из итерации в итерацию */
-    giveRandomList() {
-        return faker.helpers.uniqueArray(this.allGames, 6);
+    giveRandomCollection() {
+        this.gamesList = faker.helpers.uniqueArray(this.allGames, 6);
+
+        this.gamesList.forEach(game => {
+            return gulp.src(`./games/${game}/**`)
+                .pipe(gulp.dest(`./dist/games/${game}/`))
+        })
     }
 }
 
 gulp.task('test', (cb) => {
-    console.log(new Games().giveRandomList());
+    new Games().giveUniqueCollection();
     return cb(null)
 });
 
