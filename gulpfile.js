@@ -13,7 +13,7 @@ import imagemin, {optipng} from "gulp-imagemin";
 import * as fs from "node:fs";
 import path from "node:path";
 
-import { changeCompanyName, changePaths, changePhone } from "./helpers.js";
+import { changeCompanyName, changeGameTitle, changePaths, changePhone } from "./helpers.js";
 import { faker } from "@faker-js/faker";
 
 const sass = gulpSass(sassComp);
@@ -23,7 +23,7 @@ const SRC_TYPE = {
     new: pack.sourcePaths[1]
 };
 
-export const src = SRC_TYPE.new;
+export const src = SRC_TYPE.old;
 
 const gulpSrc = {
     images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
@@ -88,6 +88,7 @@ function html() {
             .pipe(changePhone())
             .pipe(changePaths())
             .pipe(changeCompanyName())
+            .pipe(changeGameTitle())
             .pipe(gulp.dest('./dist'))
             .pipe(browserSync.stream())
     }
@@ -156,16 +157,16 @@ const addUniqueGames = (cb) => {
     return cb(null)
 }
 
-gulp.task('test', (cb) => {
-    new Games().giveUniqueCollection();
-    return cb(null)
-});
+// gulp.task('test', (cb) => {
+//     new Games().giveUniqueCollection();
+//     return cb(null)
+// });
 
-// gulp.task('test', () => {
-//     return gulp.src('./src/*.html')
-//         .pipe(changePaths())
-//         .pipe(gulp.dest('./dist'))
-// })
+gulp.task('test', () => {
+    return gulp.src('./src/*.html')
+        .pipe(changePaths())
+        .pipe(gulp.dest('./dist'))
+})
 
 function scripts() {
     if (process.argv.includes('build')) {
