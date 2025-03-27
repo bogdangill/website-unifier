@@ -10,8 +10,10 @@ import gulpPurgeCSS from "gulp-purgecss";
 import through2 from "through2";
 import imagemin, {optipng} from "gulp-imagemin";
 
+import * as fs from "node:fs";
 import path from "node:path";
-import { changeAddress, changeCompanyName, changePaths, changePhone } from "./helpers.js";
+
+import { changeCompanyName, changePaths, changePhone } from "./helpers.js";
 
 const sass = gulpSass(sassComp);
 
@@ -85,10 +87,35 @@ function html() {
     }
 }
 
-function test() {
-    return gulp.src('./src/*.html')
-        .pipe(changePhone())
-        .pipe(gulp.dest('./dist'))
+async function test() {
+    const files = fs.readdirSync('src/');
+    const folders = files.filter(file => !path.extname(file));
+
+    const allGames = [
+        'Animals-Crush-Match-3',
+        'CARS',
+        'Frog-Super-Bubbles',
+        'Halloween-Match-3',
+        'Math-Game-For-Kids',
+        'Monsters-Match-3',
+        'Pops-Billiards',
+        'Scary-Run',
+        'Speed-Racer',
+        'Splishy-Fish'
+    ];
+
+    const usedGames = allGames.filter(game => folders.filter(folder => folder == game).toString());
+    const unusedGames = allGames;
+
+    for (let i of usedGames) {
+        for (let j of unusedGames) {
+            if (j == i) {
+                unusedGames.splice(unusedGames.indexOf(i), 1);
+            }
+        }
+    }
+
+    console.log(unusedGames);
 }
 
 gulp.task('test', test);
