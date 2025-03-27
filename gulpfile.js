@@ -93,11 +93,12 @@ function html() {
     }
 }
 
-class Games {
+export class Games {
     gamesList = [];
-    gamesMap = {
-        "oldGames": [],
-        "newGames": []
+
+    static gamesEnum = {
+        "old": new Array(),
+        "new": new Array()
     }; 
     
     constructor() {
@@ -114,7 +115,6 @@ class Games {
     /** @description подойдет если болванка новая */
     giveUniqueCollection() {
         const usedGames = this.giveUsedCollection();
-        this.gamesMap.oldGames = usedGames;
         const unusedGames = Array.from(this.allGames);
     
         for (let i of usedGames) {
@@ -128,6 +128,9 @@ class Games {
         const restGames = faker.helpers.uniqueArray(usedGames, 2);
         this.gamesList = [...unusedGames, ...restGames];
 
+        Games.gamesEnum.old = usedGames;
+        Games.gamesEnum.new = this.gamesList;
+
         this.gamesList.forEach(game => {
             return gulp.src(`./games/${game}/**`, {encoding: false})
                 .pipe(gulp.dest(`./dist/games/${game}/`))
@@ -138,10 +141,8 @@ class Games {
     giveRandomCollection() {
         this.gamesList = faker.helpers.uniqueArray(this.allGames, 6);
 
-        this.gamesMap.oldGames = this.giveUsedCollection();
-        this.gamesMap.newGames = Array.from(this.gamesList);
-
-        fs.writeFileSync('games-map.json', JSON.stringify(this.gamesMap, null, 4));
+        Games.gamesEnum.old = this.giveUsedCollection();
+        Games.gamesEnum.new = Array.from(this.gamesList);
 
         this.gamesList.forEach(game => {
             return gulp.src(`./games/${game}/**`, {encoding: false})
@@ -155,16 +156,16 @@ const addUniqueGames = (cb) => {
     return cb(null)
 }
 
-// gulp.task('test', (cb) => {
-//     new Games().giveRandomCollection();
-//     return cb(null)
-// });
+gulp.task('test', (cb) => {
+    new Games().giveUniqueCollection();
+    return cb(null)
+});
 
-gulp.task('test', () => {
-    return gulp.src('./src/*.html')
-        .pipe(changePaths())
-        .pipe(gulp.dest('./dist'))
-})
+// gulp.task('test', () => {
+//     return gulp.src('./src/*.html')
+//         .pipe(changePaths())
+//         .pipe(gulp.dest('./dist'))
+// })
 
 function scripts() {
     if (process.argv.includes('build')) {
@@ -212,9 +213,9 @@ function observer() {
     gulp.watch(gulpSrc.images, images).on('change', browserSync.reload);
 }
 
-const compileDist = gulp.parallel(styles, scripts, images, html, addUniqueGames);
+const compileDist = gulp.parallel(styles, scripts, images, html);
 
-gulp.task('dev', gulp.series(clean, compileDist, gulp.parallel(browsersync, observer)));
-gulp.task('build', gulp.series(clean, compileDist));
+gulp.task('dev', gulp.series(clean, addUniqueGames, compileDist, gulp.parallel(browsersync, observer)));
+gulp.task('build', gulp.series(clean, addUniqueGames, compileDist));
 
 gulp.task('cleansrc', cleanSrc);
