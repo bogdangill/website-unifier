@@ -23,7 +23,7 @@ const SRC_TYPE = {
     new: pack.sourcePaths[1]
 };
 
-export const src = SRC_TYPE.old;
+export const src = SRC_TYPE.new;
 
 const gulpSrc = {
     images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
@@ -95,6 +95,10 @@ function html() {
 
 class Games {
     gamesList = [];
+    gamesMap = {
+        "oldGames": [],
+        "newGames": []
+    }; 
     
     constructor() {
         this.files = fs.readdirSync('src/');
@@ -102,9 +106,15 @@ class Games {
         this.allGames = fs.readdirSync('games/').filter(file => !path.extname(file));
     }
 
+    giveUsedCollection() {
+        const usedGamesCollection = this.allGames.filter(game => this.folders.filter(folder => folder == game).toString());
+        return usedGamesCollection
+    }
+
     /** @description подойдет если болванка новая */
     giveUniqueCollection() {
-        const usedGames = this.allGames.filter(game => this.folders.filter(folder => folder == game).toString());
+        const usedGames = this.giveUsedCollection();
+        this.gamesMap.oldGames = usedGames;
         const unusedGames = Array.from(this.allGames);
     
         for (let i of usedGames) {
@@ -119,7 +129,7 @@ class Games {
         this.gamesList = [...unusedGames, ...restGames];
 
         this.gamesList.forEach(game => {
-            return gulp.src(`./games/${game}/**`)
+            return gulp.src(`./games/${game}/**`, {encoding: false})
                 .pipe(gulp.dest(`./dist/games/${game}/`))
         })
     }
@@ -128,17 +138,33 @@ class Games {
     giveRandomCollection() {
         this.gamesList = faker.helpers.uniqueArray(this.allGames, 6);
 
+        this.gamesMap.oldGames = this.giveUsedCollection();
+        this.gamesMap.newGames = Array.from(this.gamesList);
+
+        fs.writeFileSync('games-map.json', JSON.stringify(this.gamesMap, null, 4));
+
         this.gamesList.forEach(game => {
-            return gulp.src(`./games/${game}/**`)
+            return gulp.src(`./games/${game}/**`, {encoding: false})
                 .pipe(gulp.dest(`./dist/games/${game}/`))
         })
     }
 }
 
-gulp.task('test', (cb) => {
+const addUniqueGames = (cb) => {
     new Games().giveUniqueCollection();
     return cb(null)
-});
+}
+
+// gulp.task('test', (cb) => {
+//     new Games().giveRandomCollection();
+//     return cb(null)
+// });
+
+gulp.task('test', () => {
+    return gulp.src('./src/*.html')
+        .pipe(changePaths())
+        .pipe(gulp.dest('./dist'))
+})
 
 function scripts() {
     if (process.argv.includes('build')) {
@@ -186,7 +212,7 @@ function observer() {
     gulp.watch(gulpSrc.images, images).on('change', browserSync.reload);
 }
 
-const compileDist = gulp.parallel(styles, scripts, images, html);
+const compileDist = gulp.parallel(styles, scripts, images, html, addUniqueGames);
 
 gulp.task('dev', gulp.series(clean, compileDist, gulp.parallel(browsersync, observer)));
 gulp.task('build', gulp.series(clean, compileDist));
