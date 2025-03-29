@@ -23,7 +23,7 @@ const SRC_TYPE = {
     new: pack.sourcePaths[1]
 };
 
-export const src = SRC_TYPE.old;
+export const src = SRC_TYPE.new;
 
 const gulpSrc = {
     images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
@@ -41,15 +41,6 @@ function archivate() {
     return gulp.src('./dist/**', {encoding: false})
         .pipe(GulpZip(`${pack.archiveName}.zip`))
         .pipe(gulp.dest(`./build`))
-}
-
-/**
- * 
- * @deprecated
- */
-function copyGames() {
-    return gulp.src('./src/games/**', {encoding: false})
-        .pipe(gulp.dest(`./dist/games`))
 }
 
 function styles() {
@@ -153,14 +144,9 @@ export class Games {
 }
 
 const addUniqueGames = (cb) => {
-    new Games().giveUniqueCollection();
+    new Games().giveRandomCollection();
     return cb(null)
 }
-
-// gulp.task('test', (cb) => {
-//     new Games().giveUniqueCollection();
-//     return cb(null)
-// });
 
 gulp.task('test', () => {
     return gulp.src('./src/*.html')

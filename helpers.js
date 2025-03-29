@@ -165,7 +165,8 @@ export function changePhone() {
 }
 
 export function changeCompanyName() {
-    const newCompanyName = randomWord().toUpperCase();
+    const newCompanyName = faker.company.buzzNoun();
+    const CompanyNameCapitalized = newCompanyName.split('').fill(newCompanyName[0].toUpperCase(), 0, 1).join('');
 
     return through2.obj((file, _, cb) => {
         if (file.isBuffer()) {
@@ -175,7 +176,7 @@ export function changeCompanyName() {
             
             contentArr.forEach(item => {
                 if (item.includes(pack.websiteName)) {
-                    item = item.replaceAll(pack.websiteName, newCompanyName);
+                    item = item.replaceAll(pack.websiteName, CompanyNameCapitalized);
                 }
                 newContentArr.push(item);
             });
