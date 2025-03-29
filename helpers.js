@@ -187,3 +187,28 @@ export function changeCompanyName() {
         cb(null, file)
     })
 }
+
+export function changeEmail() {
+    const generatedEmail = faker.internet.email({provider: `testcompany.locale`});
+
+    return through2.obj((file, _, cb) => {
+        if (file.isBuffer()) {
+            const content = file.contents.toString('utf8');
+            const contentArr = content.split('\n');
+            const newContentArr = [];
+            const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+
+            contentArr.forEach((item) => {
+                if (item.match(emailRegex)) {
+                    item = item.replaceAll(emailRegex, generatedEmail);
+                }
+
+                newContentArr.push(item);
+            });
+
+            file.contents = Buffer.from(newContentArr.join('\n'));
+        }
+
+        cb(null, file)
+    })
+}

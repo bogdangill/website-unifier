@@ -13,7 +13,7 @@ import imagemin, {optipng} from "gulp-imagemin";
 import * as fs from "node:fs";
 import path from "node:path";
 
-import { changeCompanyName, changeGameTitle, changePaths, changePhone } from "./helpers.js";
+import { changeCompanyName, changeEmail, changeGameTitle, changePaths, changePhone } from "./helpers.js";
 import { faker } from "@faker-js/faker";
 
 const sass = gulpSass(sassComp);
@@ -80,6 +80,7 @@ function html() {
             .pipe(changePaths())
             .pipe(changeCompanyName())
             .pipe(changeGameTitle())
+            .pipe(changeEmail())
             .pipe(gulp.dest('./dist'))
             .pipe(browserSync.stream())
     }
@@ -150,7 +151,7 @@ const addUniqueGames = (cb) => {
 
 gulp.task('test', () => {
     return gulp.src('./src/*.html')
-        .pipe(changePaths())
+        .pipe(changeEmail())
         .pipe(gulp.dest('./dist'))
 })
 
