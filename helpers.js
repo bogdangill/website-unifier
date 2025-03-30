@@ -1,10 +1,9 @@
 import * as cheerio from "cheerio";
 import { Games, src } from "./gulpfile.js";
-import randomWord from "random-word";
 import pack from "./package.json" assert {type: "json"};
 import through2 from "through2";
-import {findPhoneNumbersInText, isSupportedCountry, getCountryCallingCode, isValidPhoneNumber} from "libphonenumber-js";
-import { Faker, faker } from "@faker-js/faker";
+import { isSupportedCountry, getCountryCallingCode, isValidPhoneNumber} from "libphonenumber-js";
+import { faker } from "@faker-js/faker";
 
 export function changePaths() {
     return through2.obj((file, _, cb) => {
@@ -61,21 +60,6 @@ export function changePaths() {
                     }
                 })
             })
-            //change games title (нужно вынести в отдельную сущность)
-            //работает только на одном сайте DE
-            // oldGamesArr.forEach((game, i) => {
-            //     let words = $('*').filter((_, el) => {
-            //         return $(el).text().includes(game);
-            //     });
-            //     words.each((_, el) => {
-            //         if ($(el).text() === game) {
-            //             let target = $(el).text();
-            //             console.log(target, file.relative);
-            //             let result = target.replaceAll(game, newGamesArr[i]);
-            //             $(el).text(result);
-            //         }
-            //     });
-            // })
 
             file.contents = Buffer.from($.html());
         }
@@ -85,14 +69,14 @@ export function changePaths() {
 }
 
 export function changeGameTitle() {
+    const oldGamesArr = Games.gamesEnum.old;
+    const newGamesArr = Games.gamesEnum.new;
+
     return through2.obj((file, _, cb) => { 
         if (file.isBuffer()) {
             const content = file.contents.toString('utf8');
             const contentArr = content.split('\n');
             const newContentArr = [];
-
-            const oldGamesArr = Games.gamesEnum.old;
-            const newGamesArr = Games.gamesEnum.new;
 
             contentArr.forEach((item) => {                
                 oldGamesArr.forEach((game, j) => {
@@ -136,28 +120,19 @@ export function changePhone() {
         if (file.isBuffer()) {
             const content = file.contents.toString('utf8');
             const contentArr = content.split('\n');
+            const phoneRegex = /\+[\s]*\d{1,12}/g;
+            const whitespaceRegex = /\s+/g;
             const newContentArr = [];
-            const newContentArr2 = [];
 
             contentArr.forEach(item => {
-                if (item.match(/\+\d{1,11}/)) {
-                    if (findPhoneNumbersInText(item)) {
-                        const filteredString = item.trim().split('').filter(i => !i.match(' ')).join('');
-                        item = filteredString.replace(/([A-Z]|[.,!?;:])/g, ' $1').trim();
-                    }
+                if (item.match(phoneRegex)) {
+                    item = item.replace(whitespaceRegex, '');
+                    item = item.replace(phoneRegex, newPhoneNum);
                 }
                 newContentArr.push(item);
             })
-            newContentArr.forEach(item => {
-                if (item.match(/\+\d{1,11}/)) {
-                    if (findPhoneNumbersInText(item)) {
-                        item = item.replace(/\+\d{1,12}/, newPhoneNum)
-                    }
-                }
-                newContentArr2.push(item)
-            })
 
-            file.contents = Buffer.from(newContentArr2.join('\n'));
+            file.contents = Buffer.from(newContentArr.join('\n'));
         }
 
         cb(null, file)
@@ -172,14 +147,7 @@ export function changeCompanyName() {
         if (file.isBuffer()) {
             const content = file.contents.toString('utf8');
             const contentArr = content.split('\n');
-            const newContentArr = [];
-            
-            contentArr.forEach(item => {
-                if (item.includes(pack.websiteName)) {
-                    item = item.replaceAll(pack.websiteName, CompanyNameCapitalized);
-                }
-                newContentArr.push(item);
-            });
+            const newContentArr = changeArray(contentArr, pack.websiteName, CompanyNameCapitalized);
 
             file.contents = Buffer.from(newContentArr.join('\n'));
         }  
@@ -190,25 +158,37 @@ export function changeCompanyName() {
 
 export function changeEmail() {
     const generatedEmail = faker.internet.email({provider: `testcompany.locale`});
+    const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
 
     return through2.obj((file, _, cb) => {
         if (file.isBuffer()) {
             const content = file.contents.toString('utf8');
             const contentArr = content.split('\n');
-            const newContentArr = [];
-            const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
-
-            contentArr.forEach((item) => {
-                if (item.match(emailRegex)) {
-                    item = item.replaceAll(emailRegex, generatedEmail);
-                }
-
-                newContentArr.push(item);
-            });
+            const newContentArr = changeArray(contentArr, emailRegex, generatedEmail);
 
             file.contents = Buffer.from(newContentArr.join('\n'));
         }
 
         cb(null, file)
     })
+}
+
+function changeString(str, oldSegment, newSegment) {
+    let newStr;
+
+    if (str.match(oldSegment)) {
+        newStr = str.replaceAll(oldSegment, newSegment);
+    } else {
+        newStr = str;
+    }
+
+    return newStr
+}
+
+function changeArray(arr, oldSegment, newSegment) {
+    const newArr = [];
+
+    arr.forEach(str => newArr.push(changeString(str, oldSegment, newSegment)));
+
+    return newArr
 }
