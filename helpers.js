@@ -76,15 +76,29 @@ class ArraySegmentChanger {
         this.newSegment = newSegment;
     }
 
-    change(arr) {
+    changeString(str, ...extraConditions) {
+        let condition = true;
+
+        if (extraConditions) {
+            condition = extraConditions;
+        }
+
+        let newStr = '';
+
+        if (str.match(this.oldSegment) && condition) {
+            newStr = str.replaceAll(this.oldSegment, this.newSegment);
+        } else {
+            newStr = str;
+        }
+
+        return newStr
+    }
+
+    changeArray(arr) {
         const newArr = [];
     
         arr.forEach((str) => {
-            if (str.match(this.oldSegment)) {
-                str = str.replaceAll(this.oldSegment, this.newSegment);
-            }
-
-            newArr.push(str);
+            newArr.push(this.changeString(str));
         })
 
         return newArr
@@ -97,14 +111,21 @@ class FileContentChanger extends ArraySegmentChanger {
         super(oldSegment, newSegment)
     }
 
-    change() {
+    changeFile(setCustomOperations = false) {
         return through2.obj((file, _, cb) => {
             if (file.isBuffer()) {
                 const content = file.contents.toString('utf8');
-                const contentArr = content.split('\n');
-                const newContentArr = super.change(contentArr);
+                const arr = content.split('\n');
+                let newArr = [];
 
-                file.contents = Buffer.from(newContentArr.join('\n'));
+                if (setCustomOperations) {
+                    //...customOperations
+                    console.log('результат custom operations присваивается newArr');
+                } else {
+                    newArr = super.changeArray(arr);
+                }
+
+                file.contents = Buffer.from(newArr.join('\n'));
             }
     
             cb(null, file)
@@ -117,25 +138,25 @@ export function changeCompanyName() {
     const newCompanyName = faker.company.buzzNoun();
     const CompanyNameCapitalized = newCompanyName.split('').fill(newCompanyName[0].toUpperCase(), 0, 1).join('');
 
-    return new FileContentChanger(oldCompanyName, CompanyNameCapitalized).change()
+    return new FileContentChanger(oldCompanyName, CompanyNameCapitalized).changeFile()
 }
 
 export function changeEmail() {
     const generatedEmail = faker.internet.email({provider: `testcompany.locale`});
     const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
 
-    return new FileContentChanger(emailRegex, generatedEmail).change()
+    return new FileContentChanger(emailRegex, generatedEmail).changeFile()
 }
 
 export function changeGameTitle() {
+    const oldGamesArr = Games.gamesEnum.old;
+    const newGamesArr = Games.gamesEnum.new;
+    
     return through2.obj((file, _, cb) => { 
         if (file.isBuffer()) {
             const content = file.contents.toString('utf8');
             const contentArr = content.split('\n');
             const newContentArr = [];
-
-            const oldGamesArr = Games.gamesEnum.old;
-            const newGamesArr = Games.gamesEnum.new;
 
             contentArr.forEach((item) => {                
                 oldGamesArr.forEach((game, j) => {
