@@ -139,32 +139,45 @@ export function changePhone() {
     })
 }
 
-export function changeCompanyName() {
-    const newCompanyName = faker.company.buzzNoun();
-    const CompanyNameCapitalized = newCompanyName.split('').fill(newCompanyName[0].toUpperCase(), 0, 1).join('');
+const websiteData = {
+    countryLocale: pack.archiveName.split('-').shift(),
+    oldName: pack.websiteName,
+    newName: faker.company.buzzNoun(),
+    emailRegex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
 
-    return through2.obj((file, _, cb) => {
-        if (file.isBuffer()) {
-            const content = file.contents.toString('utf8');
-            const contentArr = content.split('\n');
-            const newContentArr = changeArray(contentArr, pack.websiteName, CompanyNameCapitalized);
-
-            file.contents = Buffer.from(newContentArr.join('\n'));
-        }  
-
-        cb(null, file)
-    })
+    get newEmail() {
+        const provider = `${this.newName.replace(/\s+/g, '')}.${this.countryLocale.toLowerCase()}`;
+        return faker.internet.email({provider: provider})
+    } 
 }
 
-export function changeEmail() {
-    const generatedEmail = faker.internet.email({provider: `testcompany.locale`});
-    const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+export const changeCompanyName = changeFile(companyNameHandler);
+export const changeEmail = changeFile(emailHandler);
 
+function companyNameHandler(contentArr) {
+    const newCompanyName = websiteData.newName;
+    const companyNameCapitalized = newCompanyName.split('').fill(newCompanyName[0].toUpperCase(), 0, 1).join('');
+
+    return changeArray(contentArr, pack.websiteName, companyNameCapitalized)
+}
+
+
+function emailHandler(contentArr) {
+    const generatedEmail = websiteData.newEmail;
+    const emailRegex = websiteData.emailRegex;
+
+    return changeArray(contentArr, emailRegex, generatedEmail)
+}
+
+function changeFile(transformerCb = (arr) => arr) {//чек на передачу именно функции
     return through2.obj((file, _, cb) => {
+        if (file.isNull()) {
+            return cb(null, file)
+        }
         if (file.isBuffer()) {
             const content = file.contents.toString('utf8');
             const contentArr = content.split('\n');
-            const newContentArr = changeArray(contentArr, emailRegex, generatedEmail);
+            const newContentArr = transformerCb(contentArr);
 
             file.contents = Buffer.from(newContentArr.join('\n'));
         }
