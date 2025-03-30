@@ -61,27 +61,70 @@ export function changePaths() {
                     }
                 })
             })
-            //change games title (нужно вынести в отдельную сущность)
-            //работает только на одном сайте DE
-            // oldGamesArr.forEach((game, i) => {
-            //     let words = $('*').filter((_, el) => {
-            //         return $(el).text().includes(game);
-            //     });
-            //     words.each((_, el) => {
-            //         if ($(el).text() === game) {
-            //             let target = $(el).text();
-            //             console.log(target, file.relative);
-            //             let result = target.replaceAll(game, newGamesArr[i]);
-            //             $(el).text(result);
-            //         }
-            //     });
-            // })
 
             file.contents = Buffer.from($.html());
         }
 
         cb(null, file)
     })
+}
+
+//базовый протокласс для файлченджера
+class ArraySegmentChanger {
+    constructor(oldSegment, newSegment) {
+        this.oldSegment = oldSegment;
+        this.newSegment = newSegment;
+    }
+
+    change(arr) {
+        const newArr = [];
+    
+        arr.forEach((str) => {
+            if (str.match(this.oldSegment)) {
+                str = str.replaceAll(this.oldSegment, this.newSegment);
+            }
+
+            newArr.push(str);
+        })
+
+        return newArr
+    }
+}
+
+//родительский базовый класс для всех чейнджеров(телефона, почты, названия сайта etc.)
+class FileContentChanger extends ArraySegmentChanger {
+    constructor(oldSegment, newSegment) {
+        super(oldSegment, newSegment)
+    }
+
+    change() {
+        return through2.obj((file, _, cb) => {
+            if (file.isBuffer()) {
+                const content = file.contents.toString('utf8');
+                const contentArr = content.split('\n');
+                const newContentArr = super.change(contentArr);
+
+                file.contents = Buffer.from(newContentArr.join('\n'));
+            }
+    
+            cb(null, file)
+        })
+    }
+}
+
+export function changeCompanyName() {
+    const oldCompanyName = pack.websiteName;
+    const newCompanyName = faker.company.buzzNoun();
+    const CompanyNameCapitalized = newCompanyName.split('').fill(newCompanyName[0].toUpperCase(), 0, 1).join('');
+
+    return new FileContentChanger(oldCompanyName, CompanyNameCapitalized).change()
+}
+
+export function changeEmail() {
+    const generatedEmail = faker.internet.email({provider: `testcompany.locale`});
+    const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+
+    return new FileContentChanger(emailRegex, generatedEmail).change()
 }
 
 export function changeGameTitle() {
@@ -158,55 +201,6 @@ export function changePhone() {
             })
 
             file.contents = Buffer.from(newContentArr2.join('\n'));
-        }
-
-        cb(null, file)
-    })
-}
-
-export function changeCompanyName() {
-    const newCompanyName = faker.company.buzzNoun();
-    const CompanyNameCapitalized = newCompanyName.split('').fill(newCompanyName[0].toUpperCase(), 0, 1).join('');
-
-    return through2.obj((file, _, cb) => {
-        if (file.isBuffer()) {
-            const content = file.contents.toString('utf8');
-            const contentArr = content.split('\n');
-            const newContentArr = [];
-            
-            contentArr.forEach(item => {
-                if (item.includes(pack.websiteName)) {
-                    item = item.replaceAll(pack.websiteName, CompanyNameCapitalized);
-                }
-                newContentArr.push(item);
-            });
-
-            file.contents = Buffer.from(newContentArr.join('\n'));
-        }  
-
-        cb(null, file)
-    })
-}
-
-export function changeEmail() {
-    const generatedEmail = faker.internet.email({provider: `testcompany.locale`});
-
-    return through2.obj((file, _, cb) => {
-        if (file.isBuffer()) {
-            const content = file.contents.toString('utf8');
-            const contentArr = content.split('\n');
-            const newContentArr = [];
-            const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
-
-            contentArr.forEach((item) => {
-                if (item.match(emailRegex)) {
-                    item = item.replaceAll(emailRegex, generatedEmail);
-                }
-
-                newContentArr.push(item);
-            });
-
-            file.contents = Buffer.from(newContentArr.join('\n'));
         }
 
         cb(null, file)

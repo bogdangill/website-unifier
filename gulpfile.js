@@ -151,6 +151,7 @@ const addUniqueGames = (cb) => {
 
 gulp.task('test', () => {
     return gulp.src('./src/*.html')
+        .pipe(changeCompanyName())
         .pipe(changeEmail())
         .pipe(gulp.dest('./dist'))
 })
