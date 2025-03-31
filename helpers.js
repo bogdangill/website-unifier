@@ -97,62 +97,60 @@ export function changeGameTitle() {
     })
 }
 
-export function changePhone() {
-    const websiteLocale = pack.archiveName.split('-').shift();
-    let newPhoneNum;
-
-    if (isSupportedCountry(websiteLocale)) {
-        const countryCode = getCountryCallingCode(websiteLocale);
-        let generatedPhoneNum = `+${countryCode} ${faker.phone.number({style: 'national'})}`;
-
-        newPhoneNum = generatedPhoneNum;
-
-        if (websiteLocale !== 'CA') {
-            do {
-                generatedPhoneNum = `+${countryCode} ${faker.phone.number({style: 'national'})}`
-            } while (!isValidPhoneNumber(newPhoneNum, websiteLocale));
-        }
-    } else {
-        console.error("для данной страны не может быть сгенерирован автоматический номер телефона")
-    }
-
-    return through2.obj((file, _, cb) => {
-        if (file.isBuffer()) {
-            const content = file.contents.toString('utf8');
-            const contentArr = content.split('\n');
-            const phoneRegex = /\+[\s]*\d{1,12}/g;
-            const whitespaceRegex = /\s+/g;
-            const newContentArr = [];
-
-            contentArr.forEach(item => {
-                if (item.match(phoneRegex)) {
-                    item = item.replace(whitespaceRegex, '');
-                    item = item.replace(phoneRegex, newPhoneNum);
-                }
-                newContentArr.push(item);
-            })
-
-            file.contents = Buffer.from(newContentArr.join('\n'));
-        }
-
-        cb(null, file)
-    })
+const appData = {
+    emailRegex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+    phoneRegex: /(?:\+|\b)(?:\d\s?\(?|\d{2}\s?\(?)?(?:[\d\-\(\)\s]{6,14}\d)/g,
+    postalCodeRegex: /(?:\b\d{5}(?:-\d{4})?\b|\b[A-Z]\d[A-Z] \d[A-Z]\d\b|\b\d{5}\b|\b\d{6}\b)/g,
+    whitespaceRegex: /\s+/g,
 }
 
 const websiteData = {
     countryLocale: pack.archiveName.split('-').shift(),
     oldName: pack.websiteName,
     newName: faker.company.buzzNoun(),
-    emailRegex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
 
     get newEmail() {
-        const provider = `${this.newName.replace(/\s+/g, '')}.${this.countryLocale.toLowerCase()}`;
+        const provider = `${this.newName.replace(appData.whitespaceRegex, '')}.${this.countryLocale.toLowerCase()}`;
         return faker.internet.email({provider: provider})
     } 
 }
 
 export const changeCompanyName = changeFile(companyNameHandler);
 export const changeEmail = changeFile(emailHandler);
+export const changePhone = changeFile(phoneHandler);
+
+function generatePhoneNumber(countryLocale) {
+    const locale = countryLocale;
+    let newPhoneNum = '+0 (000) 000-00-00';
+
+    if (isSupportedCountry(locale)) {
+        const countryCode = getCountryCallingCode(locale);
+        let generatedPhoneNum = `+${countryCode} ${faker.phone.number({style: 'national'})}`;
+
+        newPhoneNum = generatedPhoneNum;
+
+        if (locale !== 'CA') {
+            do {
+                generatedPhoneNum = `+${countryCode} ${faker.phone.number({style: 'national'})}`
+            } while (!isValidPhoneNumber(newPhoneNum, locale));
+        }
+    } else {
+        console.error("для данной страны не может быть сгенерирован номер телефона")
+    }
+
+    return newPhoneNum
+}
+
+//статические переменные для хэндлеров
+const staticNewEmail = websiteData.newEmail;
+const staticNewPhoneNum = generatePhoneNumber(websiteData.countryLocale);
+
+function phoneHandler(contentArr) {
+    const newPhone = staticNewPhoneNum;
+    const oldPhone = appData.phoneRegex;
+
+    return changeArray(contentArr, oldPhone, newPhone)
+}
 
 function companyNameHandler(contentArr) {
     const newCompanyName = websiteData.newName;
@@ -161,10 +159,9 @@ function companyNameHandler(contentArr) {
     return changeArray(contentArr, pack.websiteName, companyNameCapitalized)
 }
 
-
 function emailHandler(contentArr) {
-    const generatedEmail = websiteData.newEmail;
-    const emailRegex = websiteData.emailRegex;
+    const generatedEmail = staticNewEmail;
+    const emailRegex = appData.emailRegex;
 
     return changeArray(contentArr, emailRegex, generatedEmail)
 }
@@ -190,6 +187,7 @@ function changeString(str, oldSegment, newSegment) {
     let newStr;
 
     if (str.match(oldSegment)) {
+        // str = str.replace(appData.whitespaceRegex, '');
         newStr = str.replaceAll(oldSegment, newSegment);
     } else {
         newStr = str;
