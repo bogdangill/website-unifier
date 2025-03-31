@@ -11,8 +11,6 @@ import path from "node:path";
 export function changePaths() {
     const oldGamesArr = staticOldGamesArr;
     const newGamesArr = staticNewGamesArr;
-
-    console.log(newGamesArr);
     
     return through2.obj((file, _, cb) => {
         if (file.isBuffer) {
@@ -157,21 +155,23 @@ function generatePhoneNumber(countryLocale) {
 }
 
 function changeGameTitle(arr, arr2, arr3) {
-    const newArr = [];
+    return arr.map(item => {
+        if (item.includes('src') || item.includes('href')) {
+            return item
+        }
 
-    arr.forEach(item => {
-        arr2.forEach((item2, index) => {
+        const replacementIndex = arr2.findIndex(item2 => {
             const nameRegex = generateNameRegex(item2);
+            return nameRegex.test(item)
+        });
 
-            if (item.match(nameRegex) && !item.includes('src') && !item.includes('href')) {
-                item = item.replaceAll(nameRegex, arr3[index])
-            }
-        })
+        if (replacementIndex !== -1) {
+            const nameRegex = generateNameRegex(arr2[replacementIndex]);
+            return item.replace(nameRegex, arr3[replacementIndex])
+        }
 
-        newArr.push(item);
-    })
-
-    return newArr
+        return item
+    });
 }
 
 function gameTitleHandler(contentArr) {
