@@ -8,7 +8,11 @@ import GulpZip from "gulp-zip";
 import pack from "./package.json" assert {type: "json"};
 import gulpPurgeCSS from "gulp-purgecss";
 
-import { changeCompanyName, changeEmail, changeGameTitles, changePaths, changePhone, staticNewGamesArr } from "./helpers.js";
+import * as fs from "node:fs";
+import path from "node:path";
+
+import { changeCompanyName, changeGameTitle, changePaths, changePhone } from "./helpers.js";
+import { faker } from "@faker-js/faker";
 
 const sass = gulpSass(sassComp);
 
@@ -17,7 +21,7 @@ const SRC_TYPE = {
     new: pack.sourcePaths[1]
 };
 
-export const src = SRC_TYPE.new;
+export const src = SRC_TYPE.old;
 
 const gulpSrc = {
     images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
@@ -35,6 +39,15 @@ function archivate() {
     return gulp.src('./dist/**', {encoding: false})
         .pipe(GulpZip(`${pack.archiveName}.zip`))
         .pipe(gulp.dest(`./build`))
+}
+
+/**
+ * 
+ * @deprecated
+ */
+function copyGames() {
+    return gulp.src('./src/games/**', {encoding: false})
+        .pipe(gulp.dest(`./dist/games`))
 }
 
 function styles() {
@@ -70,35 +83,88 @@ function html() {
             .pipe(gulp.dest('./dist'))
     } else {
         return gulp.src('./src/*.html')
-            .pipe(changePaths())
             .pipe(changePhone())
+            .pipe(changePaths())
             .pipe(changeCompanyName())
-            .pipe(changeGameTitles())
-            .pipe(changeEmail())
+            // .pipe(changeGameTitle())
             .pipe(gulp.dest('./dist'))
             .pipe(browserSync.stream())
     }
 }
 
-const addGames = (cb) => {
-    const gamesList = staticNewGamesArr;
+export class Games {
+    gamesList = [];
 
-    gamesList.forEach(game => {
-        return gulp.src(`./games/${game}/**`, {encoding: false})
-            .pipe(gulp.dest(`./dist/games/${game}/`))
-    })
+    static gamesEnum = {
+        "old": new Array(),
+        "new": new Array()
+    }; 
+    
+    constructor() {
+        this.files = fs.readdirSync('src/');
+        this.folders = this.files.filter(file => !path.extname(file));
+        this.allGames = fs.readdirSync('games/').filter(file => !path.extname(file));
+    }
 
+    giveUsedCollection() {
+        const usedGamesCollection = this.allGames.filter(game => this.folders.filter(folder => folder == game).toString());
+        return usedGamesCollection
+    }
+
+    /** @description подойдет если болванка новая */
+    giveUniqueCollection() {
+        const usedGames = this.giveUsedCollection();
+        const unusedGames = Array.from(this.allGames);
+    
+        for (let i of usedGames) {
+            for (let j of unusedGames) {
+                if (j == i) {
+                    unusedGames.splice(unusedGames.indexOf(i), 1);
+                }
+            }
+        }
+    
+        const restGames = faker.helpers.uniqueArray(usedGames, 2);
+        this.gamesList = [...unusedGames, ...restGames];
+
+        Games.gamesEnum.old = usedGames;
+        Games.gamesEnum.new = this.gamesList;
+
+        this.gamesList.forEach(game => {
+            return gulp.src(`./games/${game}/**`, {encoding: false})
+                .pipe(gulp.dest(`./dist/games/${game}/`))
+        })
+    }
+
+    /**@description подойдет если болванка одна и та же из итерации в итерацию */
+    giveRandomCollection() {
+        this.gamesList = faker.helpers.uniqueArray(this.allGames, 6);
+
+        Games.gamesEnum.old = this.giveUsedCollection();
+        console.log(Games.gamesEnum.old);
+        Games.gamesEnum.new = Array.from(this.gamesList);
+
+        this.gamesList.forEach(game => {
+            return gulp.src(`./games/${game}/**`, {encoding: false})
+                .pipe(gulp.dest(`./dist/games/${game}/`))
+        })
+    }
+}
+
+const addUniqueGames = (cb) => {
+    new Games().giveRandomCollection();
     return cb(null)
 }
 
+// gulp.task('test', (cb) => {
+//     new Games().giveUniqueCollection();
+//     return cb(null)
+// });
+
 gulp.task('test', () => {
     return gulp.src('./src/*.html')
+        .pipe(changePaths())
         .pipe(gulp.dest('./dist'))
-})
-
-gulp.task('method', (cb) => {
-    // console.log(generateNameRegex('Math-Game-For-Kids'));
-    return cb(null)
 })
 
 function scripts() {
@@ -135,7 +201,7 @@ function images() {
 }
 
 function observer() {
-    gulp.watch("./src/styles/**/*.scss", styles).on('change', browserSync.reload);
+    gulp.watch("./src/css/**/*.scss", styles).on('change', browserSync.reload);
     gulp.watch("./src/*.html", html).on('change', browserSync.reload);
     gulp.watch(gulpSrc.scripts, scripts).on('change', browserSync.reload);
     gulp.watch(gulpSrc.images, images).on('change', browserSync.reload);
@@ -143,7 +209,7 @@ function observer() {
 
 const compileDist = gulp.parallel(styles, scripts, images, html);
 
-gulp.task('dev', gulp.series(clean, addGames, compileDist, gulp.parallel(browsersync, observer)));
-gulp.task('build', gulp.series(clean, addGames, compileDist));
+gulp.task('dev', gulp.series(clean, addUniqueGames, compileDist, gulp.parallel(browsersync, observer)));
+gulp.task('build', gulp.series(clean, addUniqueGames, compileDist));
 
 gulp.task('cleansrc', cleanSrc);

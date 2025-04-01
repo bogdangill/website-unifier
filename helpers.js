@@ -1,20 +1,17 @@
 import * as cheerio from "cheerio";
-import { src } from "./gulpfile.js";
+import { Games, src } from "./gulpfile.js";
 import pack from "./package.json" assert {type: "json"};
 import through2 from "through2";
-import { isSupportedCountry, getCountryCallingCode, isValidPhoneNumber} from "libphonenumber-js";
-import { faker } from "@faker-js/faker";
-
-import * as fs from "node:fs";
-import path from "node:path";
+import {findPhoneNumbersInText, isSupportedCountry, getCountryCallingCode, isValidPhoneNumber} from "libphonenumber-js";
+import { Faker, faker } from "@faker-js/faker";
 
 export function changePaths() {
-    const oldGamesArr = staticOldGamesArr;
-    const newGamesArr = staticNewGamesArr;
-    
     return through2.obj((file, _, cb) => {
         if (file.isBuffer) {
             const $ = cheerio.loadBuffer(file.contents);
+
+            const oldGamesArr = Games.gamesEnum.old;
+            const newGamesArr = Games.gamesEnum.new;
             
             //change main style href
             $(`link[href="./${src.stylesCompiled}"]`).attr('href', src.cssFileName);
@@ -49,7 +46,7 @@ export function changePaths() {
                     }
                 })
             });
-            // change games href
+            //change games href
             $('a[href]').each((_, el) => {
                 let currentHref = $(el).attr('href');
                 
@@ -63,6 +60,21 @@ export function changePaths() {
                     }
                 })
             })
+            //change games title (нужно вынести в отдельную сущность)
+            //работает только на одном сайте DE
+            // oldGamesArr.forEach((game, i) => {
+            //     let words = $('*').filter((_, el) => {
+            //         return $(el).text().includes(game);
+            //     });
+            //     words.each((_, el) => {
+            //         if ($(el).text() === game) {
+            //             let target = $(el).text();
+            //             console.log(target, file.relative);
+            //             let result = target.replaceAll(game, newGamesArr[i]);
+            //             $(el).text(result);
+            //         }
+            //     });
+            // })
 
             file.contents = Buffer.from($.html());
         }
@@ -71,158 +83,28 @@ export function changePaths() {
     })
 }
 
-const appData = {
-    emailRegex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
-    phoneRegex: /(?:\+|\b)(?:\d\s?\(?|\d{2}\s?\(?)?(?:[\d\-\(\)\s]{6,14}\d)/g,
-    postalCodeRegex: /(?:\b\d{5}(?:-\d{4})?\b|\b[A-Z]\d[A-Z] \d[A-Z]\d\b|\b\d{5}\b|\b\d{6}\b)/g,
-    whitespaceRegex: /\s+/g,
-
-    get srcFolders() {
-        return fs.readdirSync('src/').filter(file => !path.extname(file))
-    },
-    get gamesCollection() {
-        return fs.readdirSync('games/').filter(file => !path.extname(file))
-    },
-    get uniqueGamesCollection() {
-        const usedGames = websiteData.usedGamesCollection;
-        const unusedGames = this.gamesCollection;
-        const restGames = faker.helpers.uniqueArray(usedGames, 2);
-
-        for (let i of usedGames) {
-            for (let j of unusedGames) {
-                if (j == i) {
-                    unusedGames.splice(unusedGames.indexOf(i), 1);
-                }
-            }
-        }
-
-        return [...unusedGames, ...restGames]
-    },
-    get randomGamesCollection() {
-        return faker.helpers.uniqueArray(this.gamesCollection, 6)
-    },
-}
-
-const websiteData = {
-    countryLocale: pack.archiveName.split('-').shift(),
-    oldName: pack.websiteName,
-    newName: faker.company.buzzNoun(),
-
-    get newEmail() {
-        const validEmailLocale = this.countryLocale === 'GB' ? 'UK' : this.countryLocale;
-        const provider = `${this.newName.replace(appData.whitespaceRegex, '')}.${validEmailLocale.toLowerCase()}`;
-        return faker.internet.email({provider: provider})
-    },
-    get usedGamesCollection() {
-        const usedGames = appData.gamesCollection.filter(game => appData.srcFolders.filter(folder => folder == game).toString());
-        return usedGames
-    },
-    get selectedGamesCollection() {
-        return appData.randomGamesCollection
-    }
-}
-
-export function changeCompanyName() {
-    return changeFile(companyNameHandler);
-}
-export function changeEmail() {
-    return changeFile(emailHandler);
-}
-export function changePhone() {
-    return changeFile(phoneHandler);
-}
-export function changeGameTitles() {
-    return changeFile(gameTitleHandler)
-}
-
-//статические переменные для хэндлеров
-const staticNewEmail = websiteData.newEmail;
-const staticNewPhoneNum = generatePhoneNumber(websiteData.countryLocale);
-const staticOldGamesArr = websiteData.usedGamesCollection;
-export const staticNewGamesArr = websiteData.selectedGamesCollection;
-
-function generatePhoneNumber(countryLocale) {
-    const locale = countryLocale;
-    let newPhoneNum = '+0 (000) 000-00-00';
-
-    if (isSupportedCountry(locale)) {
-        const countryCode = getCountryCallingCode(locale);
-        let generatedPhoneNum = `+${countryCode} ${faker.phone.number({style: 'national'})}`;
-
-        newPhoneNum = generatedPhoneNum;
-
-        if (locale !== 'CA') {
-            do {
-                generatedPhoneNum = `+${countryCode} ${faker.phone.number({style: 'national'})}`
-            } while (!isValidPhoneNumber(newPhoneNum, locale));
-        }
-    } else {
-        console.error("для данной страны не может быть сгенерирован номер телефона")
-    }
-
-    return newPhoneNum
-}
-
-function changeGameTitle(arr, arr2, arr3) {
-    return arr.map(item => {
-        if (item.includes('src') || item.includes('href')) {
-            return item
-        }
-
-        const replacementIndex = arr2.findIndex(item2 => {
-            const nameRegex = generateNameRegex(item2);
-            return nameRegex.test(item)
-        });
-
-        if (replacementIndex !== -1) {
-            const nameRegex = generateNameRegex(arr2[replacementIndex]);
-            return item.replace(nameRegex, arr3[replacementIndex])
-        }
-
-        return item
-    });
-}
-
-function gameTitleHandler(contentArr) {
-    const oldGames = staticOldGamesArr;
-    const newGames = staticNewGamesArr;
-
-    return changeGameTitle(contentArr, oldGames, newGames)
-}
-
-function phoneHandler(contentArr) {
-    const newPhone = staticNewPhoneNum;
-    const oldPhone = appData.phoneRegex;
-
-    return changeArray(contentArr, oldPhone, newPhone)
-}
-
-function companyNameHandler(contentArr) {
-    const oldName = pack.websiteName;
-    const nameRegex = generateNameRegex(oldName);
-    const newCompanyName = websiteData.newName;
-    const companyNameCapitalized = newCompanyName.split('').fill(newCompanyName[0].toUpperCase(), 0, 1).join('');
-
-    return changeArray(contentArr, nameRegex, companyNameCapitalized)
-}
-
-function emailHandler(contentArr) {
-    const generatedEmail = staticNewEmail;
-    const emailRegex = appData.emailRegex;
-
-    return changeArray(contentArr, emailRegex, generatedEmail)
-}
-
-function changeFile(transformerCb = (arr) => arr) {//чек на передачу именно функции
-    return through2.obj((file, _, cb) => {
-        if (file.isNull()) {
-            return cb(null, file)
-        }
+export function changeGameTitle() {
+    return through2.obj((file, _, cb) => { 
         if (file.isBuffer()) {
             const content = file.contents.toString('utf8');
             const contentArr = content.split('\n');
-            const newContentArr = transformerCb(contentArr);
+            const newContentArr = [];
 
+            const oldGamesArr = Games.gamesEnum.old;
+            const newGamesArr = Games.gamesEnum.new;
+
+            contentArr.forEach((item) => {                
+                oldGamesArr.forEach((game, j) => {
+                    let gameCleanName = game.split('-').join(' ');
+                    let gameRegExp = new RegExp(gameCleanName);
+                    
+                    if (item.match(gameRegExp) && !item.includes('src') && !item.includes('href')) {
+                        item = item.replaceAll(gameCleanName, newGamesArr[j]);
+                    }
+                })
+
+                newContentArr.push(item);
+            });
             file.contents = Buffer.from(newContentArr.join('\n'));
         }
 
@@ -230,41 +112,76 @@ function changeFile(transformerCb = (arr) => arr) {//чек на передач�
     })
 }
 
-function generateNameRegex(name) {
-    const nameArr = name.trim().split(/[-\s]+/);
-    const nameRegexBody = nameArr.map((segment) => segment+`\\b[\\s\\S]*?`).join('');
+export function changePhone() {
+    const websiteLocale = pack.archiveName.split('-').shift();
+    let newPhoneNum;
 
-    return new RegExp(nameRegexBody, 'gi')
-}
+    if (isSupportedCountry(websiteLocale)) {
+        const countryCode = getCountryCallingCode(websiteLocale);
+        let generatedPhoneNum = `+${countryCode} ${faker.phone.number({style: 'national'})}`;
 
-function changeString(str, oldSegment, newSegment) {
-    let newStr;
+        newPhoneNum = generatedPhoneNum;
 
-    if (typeof oldSegment === 'string') {
-        if (str.includes(oldSegment)) {
-            newStr = str.replaceAll(oldSegment, newSegment);
-        } else {
-            return str //если нет искомого сегмента, то не будет менять строку просто так, как дундук
-        }
-    } else if (oldSegment instanceof RegExp) {
-        if (oldSegment.test(str)) {
-            newStr = str.replace(oldSegment, newSegment);
-        } else {
-            return str //ну и здесь аналогично, а то столько операций впустую было
+        if (websiteLocale !== 'CA') {
+            do {
+                generatedPhoneNum = `+${countryCode} ${faker.phone.number({style: 'national'})}`
+            } while (!isValidPhoneNumber(newPhoneNum, websiteLocale));
         }
     } else {
-        console.error("⚠️БЕЩАСТЬ⚠️: oldSegment должен быть строкой или регулярным выражением");
-        return str
+        console.error("для данной страны не может быть сгенерирован автоматический номер телефона")
     }
 
-    return newStr
+    return through2.obj((file, _, cb) => {
+        if (file.isBuffer()) {
+            const content = file.contents.toString('utf8');
+            const contentArr = content.split('\n');
+            const newContentArr = [];
+            const newContentArr2 = [];
+
+            contentArr.forEach(item => {
+                if (item.match(/\+\d{1,11}/)) {
+                    if (findPhoneNumbersInText(item)) {
+                        const filteredString = item.trim().split('').filter(i => !i.match(' ')).join('');
+                        item = filteredString.replace(/([A-Z]|[.,!?;:])/g, ' $1').trim();
+                    }
+                }
+                newContentArr.push(item);
+            })
+            newContentArr.forEach(item => {
+                if (item.match(/\+\d{1,11}/)) {
+                    if (findPhoneNumbersInText(item)) {
+                        item = item.replace(/\+\d{1,12}/, newPhoneNum)
+                    }
+                }
+                newContentArr2.push(item)
+            })
+
+            file.contents = Buffer.from(newContentArr2.join('\n'));
+        }
+
+        cb(null, file)
+    })
 }
 
-function changeArray(arr, oldSegment, newSegment) {
-    if (!Array.isArray(arr) || arr.length === 0) {
-        console.warn("⚠️БЕЩАСТЬ⚠️: Пустой массив передан в changeArray");
-        return arr;
-    }
+export function changeCompanyName() {
+    const newCompanyName = faker.company.buzzNoun();
 
-    return arr.map(str => changeString(str, oldSegment, newSegment));
+    return through2.obj((file, _, cb) => {
+        if (file.isBuffer()) {
+            const content = file.contents.toString('utf8');
+            const contentArr = content.split('\n');
+            const newContentArr = [];
+            
+            contentArr.forEach(item => {
+                if (item.includes(pack.websiteName)) {
+                    item = item.replaceAll(pack.websiteName, newCompanyName);
+                }
+                newContentArr.push(item);
+            });
+
+            file.contents = Buffer.from(newContentArr.join('\n'));
+        }  
+
+        cb(null, file)
+    })
 }
