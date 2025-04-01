@@ -1,6 +1,4 @@
 {
-	"archiveName": "GB-white-game-1-1-1",
-	"websiteName": "Games Blue",
 	"name": "unique-boilerplate",
 	"version": "0.0.1",
 	"description": "boilerplate to unique websites",
@@ -12,24 +10,6 @@
 	"type": "module",
 	"author": "bogdangill",
 	"license": "ISC",
-	"sourcePaths": [
-		{
-			"type": "old",
-			"images": "assets/img/",
-			"styles": "css/styles.scss",
-			"stylesCompiled": "css/styles.css",
-			"cssFileName": "styles.css",
-			"scripts": "**/script.js"
-		},
-		{
-			"type": "new",
-			"images": "images/",
-			"styles": "styles/main.scss",
-			"stylesCompiled": "styles/main.css",
-			"cssFileName": "main.css",
-			"scripts": "scripts/*.js"
-		}
-	],
 	"devDependencies": {
 		"@faker-js/faker": "^9.6.0",
 		"browser-sync": "^3.0.3",

@@ -1,12 +1,12 @@
 import * as cheerio from "cheerio";
 import { src } from "./gulpfile.js";
-import pack from "./package.json" assert {type: "json"};
 import through2 from "through2";
 import { isSupportedCountry, getCountryCallingCode, isValidPhoneNumber} from "libphonenumber-js";
 import { faker } from "@faker-js/faker";
 
 import * as fs from "node:fs";
 import path from "node:path";
+import { config } from "./config.js";
 
 export function changePaths() {
     const oldGamesArr = staticOldGamesArr;
@@ -19,12 +19,7 @@ export function changePaths() {
             //change main style href
             $(`link[href="./${src.stylesCompiled}"]`).attr('href', src.cssFileName);
             //change main script href
-            if (src.type === 'new') {
-                $(`script[src="./${src.scripts}"]`).attr('src', 'scripts/script.js');
-            }
-            else {
-                $(`script[src="./script.js"]`).attr('src', 'scripts/script.js');
-            }
+            $(`script[src="./${src.scripts}"]`).attr('src', 'scripts/script.js');
             //change images src href
             $('img').each((i, el) => {
                 let currentSrc = $(el).attr('src');
@@ -71,17 +66,27 @@ export function changePaths() {
     })
 }
 
-const appData = {
+export const appData = {
     emailRegex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
     phoneRegex: /(?:\+|\b)(?:\d\s?\(?|\d{2}\s?\(?)?(?:[\d\-\(\)\s]{6,14}\d)/g,
     postalCodeRegex: /(?:\b\d{5}(?:-\d{4})?\b|\b[A-Z]\d[A-Z] \d[A-Z]\d\b|\b\d{5}\b|\b\d{6}\b)/g,
     whitespaceRegex: /\s+/g,
+    deprecatedGamesCollection: [
+        'Barn Dash'
+    ],
 
     get srcFolders() {
-        return fs.readdirSync('src/').filter(file => !path.extname(file))
+        return fs.readdirSync('src').filter(file => {
+            fs.statSync(path.join('src', file)).isDirectory()
+        })
     },
     get gamesCollection() {
-        return fs.readdirSync('games/').filter(file => !path.extname(file))
+        return fs.readdirSync('games').filter(file => {
+            fs.statSync(path.join('games', file)).isDirectory()
+        })
+    },
+    get allGamesCollection() {
+        return [...this.gamesCollection, this.deprecatedGamesCollection]
     },
     get uniqueGamesCollection() {
         const usedGames = websiteData.usedGamesCollection;
@@ -104,8 +109,8 @@ const appData = {
 }
 
 const websiteData = {
-    countryLocale: pack.archiveName.split('-').shift(),
-    oldName: pack.websiteName,
+    countryLocale: config.archiveName.split('-').shift(),
+    oldName: config.websiteName,
     newName: faker.company.buzzNoun(),
 
     get newEmail() {
@@ -187,7 +192,7 @@ function gameTitleHandler(contentArr) {
     const oldGames = staticOldGamesArr;
     const newGames = staticNewGamesArr;
 
-    return changeGameTitle(contentArr, oldGames, newGames)
+    return changeGameTitle(contentArr, allGamesCollection, newGames)
 }
 
 function phoneHandler(contentArr) {
@@ -198,7 +203,7 @@ function phoneHandler(contentArr) {
 }
 
 function companyNameHandler(contentArr) {
-    const oldName = pack.websiteName;
+    const oldName = websiteData.oldName;
     const nameRegex = generateNameRegex(oldName);
     const newCompanyName = websiteData.newName;
     const companyNameCapitalized = newCompanyName.split('').fill(newCompanyName[0].toUpperCase(), 0, 1).join('');
