@@ -8,7 +8,6 @@ import GulpZip from "gulp-zip";
 import pack from "./package.json" assert {type: "json"};
 import gulpPurgeCSS from "gulp-purgecss";
 import through2 from "through2";
-import imagemin, {optipng} from "gulp-imagemin";
 
 import * as fs from "node:fs";
 import path from "node:path";
@@ -136,12 +135,6 @@ function images() {
     if (process.argv.includes('build')) {
         return gulp.src(gulpSrc.images, {encoding: false})
             .pipe(gulp.dest('./dist/images'))
-            .pipe(imagemin(
-                [optipng({optimizationLevel: 5}),],
-                {
-                    verbose: true
-                }
-            ))
     } else {
         return gulp.src(gulpSrc.images, {encoding: false})
             .pipe(gulp.dest('./dist/images'))
