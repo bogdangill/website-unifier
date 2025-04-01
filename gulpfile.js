@@ -7,10 +7,6 @@ import { deleteAsync } from "del";
 import GulpZip from "gulp-zip";
 import pack from "./package.json" assert {type: "json"};
 import gulpPurgeCSS from "gulp-purgecss";
-import through2 from "through2";
-
-import * as fs from "node:fs";
-import path from "node:path";
 
 import { changeCompanyName, changeEmail, changeGameTitles, changePaths, changePhone, staticNewGamesArr } from "./helpers.js";
 
@@ -68,17 +64,17 @@ function styles() {
 function html() {
     if (process.argv.includes('build')) {
         return gulp.src('./src/*.html')
-            .pipe(changePhone)
+            .pipe(changePhone())
             .pipe(changePaths())
-            .pipe(changeCompanyName)
+            .pipe(changeCompanyName())
             .pipe(gulp.dest('./dist'))
     } else {
         return gulp.src('./src/*.html')
-            .pipe(changePhone)
             .pipe(changePaths())
-            .pipe(changeCompanyName)
-            .pipe(changeGameTitles)
-            .pipe(changeEmail)
+            .pipe(changePhone())
+            .pipe(changeCompanyName())
+            .pipe(changeGameTitles())
+            .pipe(changeEmail())
             .pipe(gulp.dest('./dist'))
             .pipe(browserSync.stream())
     }
@@ -97,10 +93,6 @@ const addGames = (cb) => {
 
 gulp.task('test', () => {
     return gulp.src('./src/*.html')
-        .pipe(changePhone)
-        .pipe(changeEmail)
-        .pipe(changeCompanyName)
-        .pipe(changeGameTitles)
         .pipe(gulp.dest('./dist'))
 })
 

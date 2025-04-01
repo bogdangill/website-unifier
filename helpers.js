@@ -122,10 +122,18 @@ const websiteData = {
     }
 }
 
-export const changeCompanyName = changeFile(companyNameHandler);
-export const changeEmail = changeFile(emailHandler);
-export const changePhone = changeFile(phoneHandler);
-export const changeGameTitles = changeFile(gameTitleHandler);
+export function changeCompanyName() {
+    return changeFile(companyNameHandler);
+}
+export function changeEmail() {
+    return changeFile(emailHandler);
+}
+export function changePhone() {
+    return changeFile(phoneHandler);
+}
+export function changeGameTitles() {
+    return changeFile(gameTitleHandler)
+}
 
 //статические переменные для хэндлеров
 const staticNewEmail = websiteData.newEmail;
@@ -192,7 +200,6 @@ function phoneHandler(contentArr) {
 function companyNameHandler(contentArr) {
     const oldName = pack.websiteName;
     const nameRegex = generateNameRegex(oldName);
-    console.log(nameRegex);
     const newCompanyName = websiteData.newName;
     const companyNameCapitalized = newCompanyName.split('').fill(newCompanyName[0].toUpperCase(), 0, 1).join('');
 
