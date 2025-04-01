@@ -7,6 +7,7 @@ import { deleteAsync } from "del";
 import GulpZip from "gulp-zip";
 import pack from "./package.json" assert {type: "json"};
 import gulpPurgeCSS from "gulp-purgecss";
+import cached from "gulp-cached";
 
 import { changeCompanyName, changeEmail, changeGameTitles, changePaths, changePhone, staticNewGamesArr } from "./helpers.js";
 
@@ -17,7 +18,7 @@ const SRC_TYPE = {
     new: pack.sourcePaths[1]
 };
 
-export const src = SRC_TYPE.new;
+export const src = SRC_TYPE.old;
 
 const gulpSrc = {
     images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
@@ -70,6 +71,7 @@ function html() {
             .pipe(gulp.dest('./dist'))
     } else {
         return gulp.src('./src/*.html')
+            .pipe(cached('markups'))
             .pipe(changePaths())
             .pipe(changePhone())
             .pipe(changeCompanyName())
