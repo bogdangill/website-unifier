@@ -240,20 +240,31 @@ function generateNameRegex(name) {
 function changeString(str, oldSegment, newSegment) {
     let newStr;
 
-    if (str.match(oldSegment)) {
-        // str = str.replace(appData.whitespaceRegex, '');
-        newStr = str.replaceAll(oldSegment, newSegment);
+    if (typeof oldSegment === 'string') {
+        if (str.includes(oldSegment)) {
+            newStr = str.replaceAll(oldSegment, newSegment);
+        } else {
+            return str //если нет искомого сегмента, то не будет менять строку просто так, как дундук
+        }
+    } else if (oldSegment instanceof RegExp) {
+        if (oldSegment.test(str)) {
+            newStr = str.replace(oldSegment, newSegment);
+        } else {
+            return str //ну и здесь аналогично, а то столько операций впустую было
+        }
     } else {
-        newStr = str;
+        console.error("⚠️БЕЩАСТЬ⚠️: oldSegment должен быть строкой или регулярным выражением");
+        return str
     }
 
     return newStr
 }
 
 function changeArray(arr, oldSegment, newSegment) {
-    const newArr = [];
+    if (!Array.isArray(arr) || arr.length === 0) {
+        console.warn("⚠️БЕЩАСТЬ⚠️: Пустой массив передан в changeArray");
+        return arr;
+    }
 
-    arr.forEach(str => newArr.push(changeString(str, oldSegment, newSegment)));
-
-    return newArr
+    return arr.map(str => changeString(str, oldSegment, newSegment));
 }
