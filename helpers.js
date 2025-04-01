@@ -190,10 +190,13 @@ function phoneHandler(contentArr) {
 }
 
 function companyNameHandler(contentArr) {
+    const oldName = pack.websiteName;
+    const nameRegex = generateNameRegex(oldName);
+    console.log(nameRegex);
     const newCompanyName = websiteData.newName;
     const companyNameCapitalized = newCompanyName.split('').fill(newCompanyName[0].toUpperCase(), 0, 1).join('');
 
-    return changeArray(contentArr, pack.websiteName, companyNameCapitalized)
+    return changeArray(contentArr, nameRegex, companyNameCapitalized)
 }
 
 function emailHandler(contentArr) {
@@ -222,7 +225,7 @@ function changeFile(transformerCb = (arr) => arr) {//чек на передач�
 
 function generateNameRegex(name) {
     const nameArr = name.trim().split(/[-\s]+/);
-    const nameRegexBody = nameArr.map((segment) => segment+`[-\\s]?`).join('');
+    const nameRegexBody = nameArr.map((segment) => segment+`\\b[\\s\\S]*?`).join('');
 
     return new RegExp(nameRegexBody, 'gi')
 }
