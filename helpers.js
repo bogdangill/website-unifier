@@ -109,7 +109,8 @@ const websiteData = {
     newName: faker.company.buzzNoun(),
 
     get newEmail() {
-        const provider = `${this.newName.replace(appData.whitespaceRegex, '')}.${this.countryLocale.toLowerCase()}`;
+        const validEmailLocale = this.countryLocale === 'GB' ? 'UK' : this.countryLocale;
+        const provider = `${this.newName.replace(appData.whitespaceRegex, '')}.${validEmailLocale.toLowerCase()}`;
         return faker.internet.email({provider: provider})
     },
     get usedGamesCollection() {
