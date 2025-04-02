@@ -66,7 +66,12 @@ export function changePaths() {
     })
 }
 
-const appData = {
+async function getSrcFolders() {
+    const dirents = await fs.promises.readdir('src', {withFileTypes: true});
+    return dirents.filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
+}
+
+export const appData = {
     emailRegex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
     phoneRegex: /(?:\+|\b)(?:\d\s?\(?|\d{2}\s?\(?)?(?:[\d\-\(\)\s]{6,14}\d)/g,
     postalCodeRegex: /(?:\b\d{5}(?:-\d{4})?\b|\b[A-Z]\d[A-Z] \d[A-Z]\d\b|\b\d{5}\b|\b\d{6}\b)/g,
@@ -80,13 +85,22 @@ const appData = {
     ],
 
     get srcFolders() {
-        return fs.readdirSync('src/').filter(file => !path.extname(file))
+        return fs.promises.readdir('src', { withFileTypes: true })
+            .then(dirents => dirents
+                .filter(dirent => dirent.isDirectory())
+                .map(dirent => dirent.name)
+            );
     },
     get gamesCollection() {
-        return fs.readdirSync('games/').filter(file => !path.extname(file))
+        return fs.promises.readdir('games', { withFileTypes: true })
+            .then(dirents => dirents
+                .filter(dirent => dirent.isDirectory())
+                .map(dirent => dirent.name)
+            );
     },
     get allGamesCollection() {
-        return [...this.gamesCollection, ...this.deprecatedGamesCollection]
+        return Promise.all([this.gamesCollection, this.deprecatedGamesCollection])
+            .then(([games, deprecatedGames]) => [...games, ...deprecatedGames]);
     },
     get uniqueGamesCollection() {
         const usedGames = websiteData.usedGamesCollection;

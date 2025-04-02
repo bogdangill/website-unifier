@@ -9,7 +9,8 @@ import pack from "./package.json" assert {type: "json"};
 import gulpPurgeCSS from "gulp-purgecss";
 import cached from "gulp-cached";
 
-import { changeCompanyName, changeEmail, changeGameTitles, changePaths, changePhone, staticNewGamesArr } from "./helpers.js";
+// import { appData, changeCompanyName, changeEmail, changeGameTitles, changePaths, changePhone, staticNewGamesArr } from "./helpers.js";
+import { getGamesCollection, getSrcFolders } from "./test.js";
 
 const sass = gulpSass(sassComp);
 
@@ -65,9 +66,12 @@ function styles() {
 function html() {
     if (process.argv.includes('build')) {
         return gulp.src('./src/*.html')
-            .pipe(changePhone())
+            .pipe(cached('markups'))
             .pipe(changePaths())
+            .pipe(changePhone())
             .pipe(changeCompanyName())
+            .pipe(changeGameTitles())
+            .pipe(changeEmail())
             .pipe(gulp.dest('./dist'))
     } else {
         return gulp.src('./src/*.html')
@@ -95,11 +99,19 @@ const addGames = (cb) => {
 
 gulp.task('test', () => {
     return gulp.src('./src/*.html')
+        .pipe(changePhone())
         .pipe(gulp.dest('./dist'))
 })
 
+async function getFoldersArr() {
+    const srcFolders = await getSrcFolders();
+    const games = await getGamesCollection();
+    
+    console.log(srcFolders, games);
+}
+
 gulp.task('method', (cb) => {
-    // console.log(generateNameRegex('Math-Game-For-Kids'));
+    getFoldersArr();
     return cb(null)
 })
 
@@ -137,7 +149,7 @@ function images() {
 }
 
 function observer() {
-    gulp.watch("./src/styles/**/*.scss", styles).on('change', browserSync.reload);
+    gulp.watch("./src/css/**/*.scss", styles).on('change', browserSync.reload);
     gulp.watch("./src/*.html", html).on('change', browserSync.reload);
     gulp.watch(gulpSrc.scripts, scripts).on('change', browserSync.reload);
     gulp.watch(gulpSrc.images, images).on('change', browserSync.reload);
