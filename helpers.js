@@ -19,12 +19,7 @@ export function changePaths() {
             //change main style href
             $(`link[href="./${src.stylesCompiled}"]`).attr('href', src.cssFileName);
             //change main script href
-            if (src.type === 'new') {
-                $(`script[src="./${src.scripts}"]`).attr('src', 'scripts/script.js');
-            }
-            else {
-                $(`script[src="./script.js"]`).attr('src', 'scripts/script.js');
-            }
+            $(`script[src="./${src.scripts}"]`).attr('src', 'scripts/script.js');
             //change images src href
             $('img').each((i, el) => {
                 let currentSrc = $(el).attr('src');
@@ -76,12 +71,22 @@ const appData = {
     phoneRegex: /(?:\+|\b)(?:\d\s?\(?|\d{2}\s?\(?)?(?:[\d\-\(\)\s]{6,14}\d)/g,
     postalCodeRegex: /(?:\b\d{5}(?:-\d{4})?\b|\b[A-Z]\d[A-Z] \d[A-Z]\d\b|\b\d{5}\b|\b\d{6}\b)/g,
     whitespaceRegex: /\s+/g,
+    deprecatedGamesCollection: [
+        'Barn Dash',
+        'Dashers',
+        'Duosometric Jump',
+        'Cube Dash',
+        'Jump Jump'
+    ],
 
     get srcFolders() {
         return fs.readdirSync('src/').filter(file => !path.extname(file))
     },
     get gamesCollection() {
         return fs.readdirSync('games/').filter(file => !path.extname(file))
+    },
+    get allGamesCollection() {
+        return [...this.gamesCollection, ...this.deprecatedGamesCollection]
     },
     get uniqueGamesCollection() {
         const usedGames = websiteData.usedGamesCollection;
@@ -114,7 +119,7 @@ const websiteData = {
         return faker.internet.email({provider: provider})
     },
     get usedGamesCollection() {
-        const usedGames = appData.gamesCollection.filter(game => appData.srcFolders.filter(folder => folder == game).toString());
+        const usedGames = appData.allGamesCollection.filter(game => appData.srcFolders.filter(folder => folder == game).toString());
         return usedGames
     },
     get selectedGamesCollection() {
@@ -151,11 +156,11 @@ function generatePhoneNumber(countryLocale) {
 
         newPhoneNum = generatedPhoneNum;
 
-        if (locale !== 'CA') {
-            do {
-                generatedPhoneNum = `+${countryCode} ${faker.phone.number({style: 'national'})}`
-            } while (!isValidPhoneNumber(newPhoneNum, locale));
-        }
+
+        do {
+            generatedPhoneNum = `+${countryCode} ${faker.phone.number({style: 'national'})}`
+            newPhoneNum = generatedPhoneNum;
+        } while (!isValidPhoneNumber(newPhoneNum, locale));
     } else {
         console.error("для данной страны не может быть сгенерирован номер телефона")
     }
