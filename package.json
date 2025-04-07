@@ -1,6 +1,6 @@
 {
-	"archiveName": "GB-white-game-1-1-1",
-	"websiteName": "Neon Pixel",
+	"archiveName": "DE-white-game-2-1-1",
+	"websiteName": "Unity Hub",
 	"name": "unique-boilerplate",
 	"version": "0.0.1",
 	"description": "boilerplate to unique websites",
@@ -27,6 +27,14 @@
 			"styles": "styles/main.scss",
 			"stylesCompiled": "styles/main.css",
 			"cssFileName": "main.css",
+			"scripts": "scripts/*.js"
+		},
+		{
+			"type": "mine",
+			"images": "images/",
+			"styles": "scss/styles.scss",
+			"stylesCompiled": "styles.css",
+			"cssFileName": "styles.css",
 			"scripts": "scripts/*.js"
 		}
 	],

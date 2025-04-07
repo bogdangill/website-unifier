@@ -15,10 +15,11 @@ const sass = gulpSass(sassComp);
 
 const SRC_TYPE = {
     old: pack.sourcePaths[0],
-    new: pack.sourcePaths[1]
+    new: pack.sourcePaths[1],
+    mine: pack.sourcePaths[2]
 };
 
-export const src = SRC_TYPE.old;
+export const src = SRC_TYPE.mine;
 
 const gulpSrc = {
     images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
@@ -137,7 +138,7 @@ function images() {
 }
 
 function observer() {
-    gulp.watch("./src/styles/**/*.scss", styles).on('change', browserSync.reload);
+    gulp.watch("./src/css/**/*.scss", styles).on('change', browserSync.reload);
     gulp.watch("./src/*.html", html).on('change', browserSync.reload);
     gulp.watch(gulpSrc.scripts, scripts).on('change', browserSync.reload);
     gulp.watch(gulpSrc.images, images).on('change', browserSync.reload);

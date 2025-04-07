@@ -7,6 +7,7 @@ import { faker } from "@faker-js/faker";
 
 import * as fs from "node:fs";
 import path from "node:path";
+import { verifiedData } from "./verifiedData.js";
 
 export function changePaths() {
     const oldGamesArr = staticOldGamesArr;
@@ -25,7 +26,7 @@ export function changePaths() {
                 let currentSrc = $(el).attr('src');
 
                 if (currentSrc.match(src.images)) {
-                    if (src.type === 'new') {
+                    if (src.type === 'new' || src.type === 'mine') {
                         let imagePath = currentSrc.split('/').splice(-3).join('/');
                         $(el).attr('src', `${imagePath}`);
                     } else {
@@ -104,7 +105,7 @@ const appData = {
         return [...unusedGames, ...restGames]
     },
     get randomGamesCollection() {
-        return faker.helpers.uniqueArray(this.gamesCollection, 6)
+        return faker.helpers.uniqueArray(this.gamesCollection, 5)
     },
 }
 
@@ -196,7 +197,7 @@ function gameTitleHandler(contentArr) {
 }
 
 function phoneHandler(contentArr) {
-    const newPhone = staticNewPhoneNum;
+    const newPhone = verifiedData.phone;
     const oldPhone = appData.phoneRegex;
 
     return changeArray(contentArr, oldPhone, newPhone)
@@ -207,15 +208,19 @@ function companyNameHandler(contentArr) {
     const nameRegex = generateNameRegex(oldName);
     const newCompanyName = websiteData.newName;
     const companyNameCapitalized = newCompanyName.split('').fill(newCompanyName[0].toUpperCase(), 0, 1).join('');
+    
+    const verifiedName = verifiedData.companyName;
 
-    return changeArray(contentArr, nameRegex, companyNameCapitalized)
+    return changeArray(contentArr, nameRegex, verifiedName)
 }
 
 function emailHandler(contentArr) {
     const generatedEmail = staticNewEmail;
     const emailRegex = appData.emailRegex;
 
-    return changeArray(contentArr, emailRegex, generatedEmail)
+    const verifiedMail = verifiedData.mail;
+
+    return changeArray(contentArr, emailRegex, verifiedMail)
 }
 
 function changeFile(transformerCb = (arr) => arr) {//чек на передачу именно функции
