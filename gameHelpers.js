@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import through2 from "through2";
 import { faker } from "@faker-js/faker";
 
-export function uniquePlayerInfo() {
+export function uniqueWebsiteInfo() {
     return through2.obj((file, _, cb) => {
         if (file.isNull()) {
             return cb(null, file)
@@ -32,6 +32,7 @@ export function uniquePlayerInfo() {
                 'Plaguechant'
             ]
 
+            //player info
             $('[data-player-name]').each((_, el) => {
                 $(el).text(`${faker.word.adjective()}_${faker.word.noun()}_${faker.number.int({min: 1, max: 100})}`);
             });
@@ -43,6 +44,19 @@ export function uniquePlayerInfo() {
             });
             $('[data-player-state]').each((_, el) => {
                 $(el).text(`${faker.helpers.arrayElement(GAME_CLASSES)}`)
+            });
+
+            //team names
+            $('[data-team-name]').each((_, el) => {
+                $(el).text(`${faker.person.fullName()}`)
+            });
+
+            //game data
+            $('[data-game-players-all]').each((_, el) => {
+                $(el).text(`${faker.number.int({min: 10000, max: 100000})}`)
+            });
+            $('[data-game-players-online]').each((_, el) => {
+                $(el).text(`${faker.number.int({min: 1000, max: 10000})}`)
             });
 
             file.contents = Buffer.from($.html());

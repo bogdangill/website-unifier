@@ -10,7 +10,7 @@ import gulpPurgeCSS from "gulp-purgecss";
 import cached from "gulp-cached";
 
 import { changeCompanyName, changeEmail, changeGameTitles, changePaths, changePhone, staticNewGamesArr } from "./helpers.js";
-import { uniquePlayerInfo } from "./gameHelpers.js";
+import { uniqueWebsiteInfo } from "./gameHelpers.js";
 
 const sass = gulpSass(sassComp);
 
@@ -80,7 +80,7 @@ function html() {
             .pipe(changeCompanyName())
             .pipe(changeGameTitles())
             .pipe(changeEmail())
-            .pipe(uniquePlayerInfo())
+            .pipe(uniqueWebsiteInfo())
             .pipe(gulp.dest('./dist'))
             .pipe(browserSync.stream())
     }
