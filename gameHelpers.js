@@ -35,28 +35,40 @@ export function uniqueWebsiteInfo() {
             //player info
             $('[data-player-name]').each((_, el) => {
                 $(el).text(`${faker.word.adjective()}_${faker.word.noun()}_${faker.number.int({min: 1, max: 100})}`);
+                $(el).removeAttr('data-player-name');
             });
             $('[data-player-lvl]').each((_, el) => {
-                $(el).text(`Level: ${faker.number.int({min: 1, max: 80})}`)
+                $(el).text(`Level: ${faker.number.int({min: 1, max: 80})}`);
+                $(el).removeAttr('data-player-lvl');
             });
             $('[data-player-price]').each((_, el) => {
-                $(el).text(`${faker.finance.amount({min: 900, max: 10000, dec: 0, symbol: '$', autoFormat: true})}`)
+                $(el).text(`${faker.finance.amount({min: 900, max: 10000, dec: 0, symbol: '$', autoFormat: true})}`);
+                $(el).removeAttr('data-player-price');
             });
             $('[data-player-state]').each((_, el) => {
-                $(el).text(`${faker.helpers.arrayElement(GAME_CLASSES)}`)
+                $(el).text(`${faker.helpers.arrayElement(GAME_CLASSES)}`);
+                $(el).removeAttr('data-player-state');
             });
 
             //team names
             $('[data-team-name]').each((_, el) => {
-                $(el).text(`${faker.person.fullName()}`)
+                $(el).text(`${faker.person.fullName()}`);
+                $(el).removeAttr('data-team-name');
             });
 
             //game data
             $('[data-game-players-all]').each((_, el) => {
-                $(el).text(`${faker.number.int({min: 10000, max: 100000})}`)
+                $(el).text(`${faker.number.int({min: 10000, max: 100000})}`);
+                $(el).removeAttr('data-game-players-all');
             });
             $('[data-game-players-online]').each((_, el) => {
-                $(el).text(`${faker.number.int({min: 1000, max: 10000})}`)
+                $(el).text(`${faker.number.int({min: 1000, max: 10000})}`);
+                $(el).removeAttr('data-game-players-online');
+            });
+
+            //вынести в отдельную сущность (чистка следов уникализации)
+            $('[chat-id]').each((_, el) => {
+                $(el).removeAttr('chat-id');
             });
 
             file.contents = Buffer.from($.html());
