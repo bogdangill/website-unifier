@@ -20,7 +20,7 @@ const SRC_TYPE = {
     mine: pack.sourcePaths[2]
 };
 
-export const src = SRC_TYPE.mine;
+export const src = SRC_TYPE.new;
 
 const gulpSrc = {
     images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
@@ -135,7 +135,7 @@ function images() {
             .pipe(gulp.dest('./dist/images'))
     } else {
         return gulp.src(gulpSrc.images, {encoding: false})
-            .pipe(gulp.dest('./dist/images'))
+            .pipe(gulp.dest('./dist/img'))
             .pipe(browserSync.stream())
     }
 }

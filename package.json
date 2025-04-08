@@ -1,6 +1,6 @@
 {
-	"archiveName": "DE-white-game-2-1-2",
-	"websiteName": "Unity Hub",
+	"archiveName": "GB-white-game-1-3-2",
+	"websiteName": "Play Peak",
 	"name": "unique-boilerplate",
 	"version": "0.0.1",
 	"description": "boilerplate to unique websites",
@@ -24,12 +24,12 @@
 		},
 		{
 			"type": "new",
-			"images": "images/",
-			"styles": "styles/main.scss",
-			"stylesCompiled": "styles/main.css",
-			"cssFileName": "main.css",
-			"scripts": "scripts/*.js",
-			"watchStyles": "styles/**/*.scss"
+			"images": "img/",
+			"styles": "style/style.scss",
+			"stylesCompiled": "style/style.css",
+			"cssFileName": "style.css",
+			"scripts": "script.js",
+			"watchStyles": "style/**/*.scss"
 		},
 		{
 			"type": "mine",

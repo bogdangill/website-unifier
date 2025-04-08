@@ -18,7 +18,7 @@ export function changePaths() {
             const $ = cheerio.loadBuffer(file.contents);
             
             //change main style href
-            $(`link[href="./${src.stylesCompiled}"]`).attr('href', src.cssFileName);
+            $(`link[href="${src.stylesCompiled}"]`).attr('href', src.cssFileName);
             //change main script href
             $(`script[src="./${src.scripts}"]`).attr('src', 'scripts/script.js');
             //change images src href
@@ -26,13 +26,14 @@ export function changePaths() {
                 let currentSrc = $(el).attr('src');
 
                 if (currentSrc.match(src.images)) {
-                    if (src.type === 'new' || src.type === 'mine') {
-                        let imagePath = currentSrc.split('/').splice(-3).join('/');
-                        $(el).attr('src', `${imagePath}`);
-                    } else {
+                    console.log('test');
+                    // if (src.type === 'new' || src.type === 'mine') {
+                    //     let imagePath = currentSrc.split('/').splice(-3).join('/');
+                    //     $(el).attr('src', `${imagePath}`);
+                    // } else {
                         let imageName = currentSrc.split('/').pop();
-                        $(el).attr('src', `images/${imageName}`);
-                    }
+                        $(el).attr('src', `img/${imageName}`);
+                    // }
                 }
 
                 //DRY
@@ -103,9 +104,10 @@ const appData = {
         }
 
         return [...unusedGames, ...restGames]
+        // return unusedGames
     },
     get randomGamesCollection() {
-        return faker.helpers.uniqueArray(this.gamesCollection, 5)
+        return faker.helpers.uniqueArray(this.gamesCollection, 6)
     },
 }
 
@@ -124,7 +126,7 @@ const websiteData = {
         return usedGames
     },
     get selectedGamesCollection() {
-        return appData.randomGamesCollection
+        return appData.uniqueGamesCollection
     }
 }
 
