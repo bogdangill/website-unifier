@@ -10,6 +10,7 @@ import gulpPurgeCSS from "gulp-purgecss";
 import cached from "gulp-cached";
 
 import { changeCompanyName, changeEmail, changeGameTitles, changePaths, changePhone, staticNewGamesArr } from "./helpers.js";
+import { uniquePlayerInfo } from "./gameHelpers.js";
 
 const sass = gulpSass(sassComp);
 
@@ -24,7 +25,8 @@ export const src = SRC_TYPE.mine;
 const gulpSrc = {
     images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
     styles: `./src/${src.styles}`,
-    scripts: `./src/${src.scripts}`
+    scripts: `./src/${src.scripts}`,
+    watchStyles: `./src/${src.watchStyles}`
 };
 
 function clean() {
@@ -78,6 +80,7 @@ function html() {
             .pipe(changeCompanyName())
             .pipe(changeGameTitles())
             .pipe(changeEmail())
+            .pipe(uniquePlayerInfo())
             .pipe(gulp.dest('./dist'))
             .pipe(browserSync.stream())
     }
@@ -138,7 +141,7 @@ function images() {
 }
 
 function observer() {
-    gulp.watch("./src/css/**/*.scss", styles).on('change', browserSync.reload);
+    gulp.watch(gulpSrc.watchStyles, styles).on('change', browserSync.reload);
     gulp.watch("./src/*.html", html).on('change', browserSync.reload);
     gulp.watch(gulpSrc.scripts, scripts).on('change', browserSync.reload);
     gulp.watch(gulpSrc.images, images).on('change', browserSync.reload);
