@@ -9,8 +9,9 @@ import pack from "./package.json" assert {type: "json"};
 import gulpPurgeCSS from "gulp-purgecss";
 import cached from "gulp-cached";
 
-import { changeCompanyName, changeEmail, changeGameTitles, changePaths, changePhone, staticNewGamesArr } from "./helpers.js";
+import { changeCompanyName, changeEmail, changeGameTitles, changePaths, changePhone, cleanTraces, staticNewGamesArr } from "./helpers.js";
 import { uniqueWebsiteInfo } from "./gameHelpers.js";
+import { renameHTML } from "./renameService.js";
 
 const sass = gulpSass(sassComp);
 
@@ -20,7 +21,7 @@ const SRC_TYPE = {
     mine: pack.sourcePaths[2]
 };
 
-export const src = SRC_TYPE.mine;
+export const src = SRC_TYPE.old;
 
 const gulpSrc = {
     images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
@@ -67,14 +68,17 @@ function styles() {
 
 function html() {
     if (process.argv.includes('build')) {
-        return gulp.src('./src/*.html')
+        // теперь только с файлами из диста, 
+        // ибо ренеймер уже создает новые версии файлов до этой таски
+        // и надо работать именно с ними
+        return gulp.src('./dist/*.html')
             .pipe(changePhone())
             .pipe(changePaths())
             .pipe(changeCompanyName())
             .pipe(gulp.dest('./dist'))
     } else {
         return gulp.src('./src/*.html')
-            .pipe(cached('markups'))
+            .pipe(cleanTraces())
             .pipe(changePaths())
             .pipe(changePhone())
             .pipe(changeCompanyName())
@@ -96,11 +100,6 @@ const addGames = (cb) => {
 
     return cb(null)
 }
-
-gulp.task('test', () => {
-    return gulp.src('./src/*.html')
-        .pipe(gulp.dest('./dist'))
-})
 
 gulp.task('method', (cb) => {
     // console.log(generateNameRegex('Math-Game-For-Kids'));
@@ -150,6 +149,6 @@ function observer() {
 const compileDist = gulp.parallel(styles, scripts, images, html);
 
 gulp.task('dev', gulp.series(clean, addGames, compileDist, gulp.parallel(browsersync, observer)));
-gulp.task('build', gulp.series(clean, addGames, compileDist));
+gulp.task('build', gulp.series(clean, addGames, renameHTML, compileDist));
 
 gulp.task('cleansrc', cleanSrc);
