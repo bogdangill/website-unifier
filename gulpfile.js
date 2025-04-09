@@ -21,7 +21,7 @@ const SRC_TYPE = {
     mine: pack.sourcePaths[2]
 };
 
-export const src = SRC_TYPE.old;
+export const src = SRC_TYPE.mine;
 
 const gulpSrc = {
     images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
@@ -49,7 +49,6 @@ function styles() {
             .pipe(sass({
                 style: 'compressed'
             }).on('error', sass.logError))
-            .pipe(csso())
             .pipe(gulp.dest(`./dist`))
             // .pipe(gulp.src(`./dist/${src.cssFileName}`))
             // .pipe(gulpPurgeCSS({
@@ -72,9 +71,13 @@ function html() {
         // ибо ренеймер уже создает новые версии файлов до этой таски
         // и надо работать именно с ними
         return gulp.src('./dist/*.html')
-            .pipe(changePhone())
+            .pipe(cleanTraces())
             .pipe(changePaths())
+            .pipe(changePhone())
             .pipe(changeCompanyName())
+            .pipe(changeGameTitles())
+            .pipe(changeEmail())
+            .pipe(uniqueWebsiteInfo())
             .pipe(gulp.dest('./dist'))
     } else {
         return gulp.src('./src/*.html')
