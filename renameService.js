@@ -3,27 +3,37 @@ import path from "node:path";
 import through2 from "through2";
 import { faker } from "@faker-js/faker";
 import * as fs from "node:fs";
-import { writeFile, access } from "node:fs/promises";
+import { writeFile, access, mkdir } from "node:fs/promises";
 import { promisify } from "node:util";
 import { Stream } from "node:stream";
 import gulp from "gulp";
 
 const pipeline = promisify(Stream.pipeline);
 
-function renameAndTrack(renameMap, { distDir = 'dist' } = {}) {
+function renameAndTrack(renameMap, { 
+    distDir = 'dist', 
+    extension = 'html'
+    } = {}) {
     return through2.obj(async function (file, _, cb) {
         try {
             const ext = path.extname(file.path);
 
-            if (!file.isBuffer() || ext !== '.html') {
+            if (!file.isBuffer() || !ext.match(extension)) {
                 this.push(file);
                 return cb();
             }
 
             const oldPath = file.relative;
-            let newName = 'index.html';
+            let newName;
 
-            if (oldPath !== 'index.html') {
+            if ('html'.match(extension)) {
+                newName = 'index.html';
+
+                if (oldPath !== 'index.html') {
+                    newName = faker.number.hex({min: 0, max: 65535}) + ext;
+                }
+            }
+            else {
                 newName = faker.number.hex({min: 0, max: 65535}) + ext;
             }
 
@@ -41,7 +51,15 @@ function renameAndTrack(renameMap, { distDir = 'dist' } = {}) {
                     }
                 });
             }
-            await writeFile(newAbsPath, file.contents);
+            try {
+                await writeFile(newAbsPath, file.contents);
+            } catch (err) {
+                //создает все промежуточные папки для успешной записи если они были в срц
+                const dir = path.dirname(newAbsPath);
+                await mkdir(dir, {recursive: true});
+                await writeFile(newAbsPath, file.contents);
+                console.log(`создал файл с подпапками ${newAbsPath}`);
+            }
 
             renameMap.set(
                 path.posix.normalize(file.relative.replace(/\\/g, '/')),
