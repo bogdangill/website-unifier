@@ -8,6 +8,7 @@ import { faker } from "@faker-js/faker";
 import * as fs from "node:fs";
 import path from "node:path";
 import { verifiedData } from "./verifiedData.js";
+import { changeGameTitle } from "./gameHelpers.js";
 
 export function changePaths() {
     const oldGamesArr = staticOldGamesArr;
@@ -169,26 +170,6 @@ function generatePhoneNumber(countryLocale) {
     return newPhoneNum
 }
 
-function changeGameTitle(arr, arr2, arr3) {
-    return arr.map(item => {
-        if (item.includes('src') || item.includes('href')) {
-            return item
-        }
-
-        const replacementIndex = arr2.findIndex(item2 => {
-            const nameRegex = generateNameRegex(item2);
-            return nameRegex.test(item)
-        });
-
-        if (replacementIndex !== -1) {
-            const nameRegex = generateNameRegex(arr2[replacementIndex]);
-            return item.replace(nameRegex, arr3[replacementIndex])
-        }
-
-        return item
-    });
-}
-
 function gameTitleHandler(contentArr) {
     const oldGames = staticOldGamesArr;
     const newGames = staticNewGamesArr;
@@ -223,6 +204,25 @@ function emailHandler(contentArr) {
     return changeArray(contentArr, emailRegex, verifiedMail)
 }
 
+export function cleanTraces() {
+    return through2.obj((file, _, cb) => {
+        if (file.isNull()) {
+            return cb(null, file)
+        }
+        if (file.isBuffer()) {
+            const $ = cheerio.loadBuffer(file.contents);
+
+            $('[chat-id]').each((_, el) => {
+                $(el).removeAttr('chat-id');
+            });
+
+            file.contents = Buffer.from($.html());
+        }
+
+        cb(null, file)
+    })
+}
+
 function changeFile(transformerCb = (arr) => arr) {//чек на передачу именно функции
     return through2.obj((file, _, cb) => {
         if (file.isNull()) {
@@ -240,7 +240,7 @@ function changeFile(transformerCb = (arr) => arr) {//чек на передач�
     })
 }
 
-function generateNameRegex(name) {
+export function generateNameRegex(name) {
     const nameArr = name.trim().split(/[-\s]+/);
     const nameRegexBody = nameArr.map((segment) => segment+`\\b[\\s\\S]*?`).join('');
 

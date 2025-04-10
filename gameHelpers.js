@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import through2 from "through2";
 import { faker } from "@faker-js/faker";
+import { generateNameRegex } from "./helpers.js";
 
 export function uniqueWebsiteInfo() {
     return through2.obj((file, _, cb) => {
@@ -66,14 +67,29 @@ export function uniqueWebsiteInfo() {
                 $(el).removeAttr('data-game-players-online');
             });
 
-            //вынести в отдельную сущность (чистка следов уникализации)
-            $('[chat-id]').each((_, el) => {
-                $(el).removeAttr('chat-id');
-            });
-
             file.contents = Buffer.from($.html());
         }
 
         cb(null, file)
     })
+}
+
+export function changeGameTitle(arr, arr2, arr3) {
+    return arr.map(item => {
+        if (item.includes('src') || item.includes('href')) {
+            return item
+        }
+
+        const replacementIndex = arr2.findIndex(item2 => {
+            const nameRegex = generateNameRegex(item2);
+            return nameRegex.test(item)
+        });
+
+        if (replacementIndex !== -1) {
+            const nameRegex = generateNameRegex(arr2[replacementIndex]);
+            return item.replace(nameRegex, arr3[replacementIndex])
+        }
+
+        return item
+    });
 }
