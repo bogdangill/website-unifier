@@ -11,7 +11,7 @@ import cached from "gulp-cached";
 
 import { changeCompanyName, changeEmail, changeGameTitles, changePaths, changePhone, cleanTraces, staticNewGamesArr } from "./helpers.js";
 import { uniqueWebsiteInfo } from "./gameHelpers.js";
-import { renameHTML } from "./renameService.js";
+import { renameCSS, renameHTML, renameIMG } from "./renameService.js";
 
 const sass = gulpSass(sassComp);
 
@@ -21,7 +21,7 @@ const SRC_TYPE = {
     mine: pack.sourcePaths[2]
 };
 
-export const src = SRC_TYPE.mine;
+export const src = SRC_TYPE.old;
 
 const gulpSrc = {
     images: `./src/${src.images}/**/*.+(png|jpg|gif|ico|svg|webp)`,
@@ -104,10 +104,7 @@ const addGames = (cb) => {
     return cb(null)
 }
 
-gulp.task('method', (cb) => {
-    // console.log(generateNameRegex('Math-Game-For-Kids'));
-    return cb(null)
-})
+gulp.task('test', gulp.series(renameHTML, renameCSS, renameIMG));
 
 function scripts() {
     if (process.argv.includes('build')) {
@@ -152,6 +149,6 @@ function observer() {
 const compileDist = gulp.parallel(styles, scripts, images, html);
 
 gulp.task('dev', gulp.series(clean, addGames, compileDist, gulp.parallel(browsersync, observer)));
-gulp.task('build', gulp.series(clean, addGames, renameHTML, compileDist));
+gulp.task('build', gulp.series(clean, addGames, renameHTML, compileDist, renameCSS));
 
 gulp.task('cleansrc', cleanSrc);

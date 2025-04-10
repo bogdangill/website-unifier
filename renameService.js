@@ -125,7 +125,7 @@ export const renameCSS = async () => {
     const renameMap = new Map();
 
     await pipeline(
-        gulp.src('src/{style,styles,css,scss}/*.css'),
+        gulp.src('dist/*.css'),
         renameAndTrack(renameMap, {distDir: './dist', extension: 'css'})
     )
 
