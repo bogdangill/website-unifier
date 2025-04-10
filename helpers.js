@@ -240,6 +240,13 @@ function changeFile(transformerCb = (arr) => arr) {//чек на передач�
     })
 }
 
+export function generateFilesRegex(filesArr) {
+    const pattern = filesArr.map(file => file.replace(/\./g, '\\.')).join('|');
+    const regex = new RegExp(`(?:|/)(${pattern})`, 'g');
+
+    return regex
+}
+
 export function generateNameRegex(name) {
     const nameArr = name.trim().split(/[-\s]+/);
     const nameRegexBody = nameArr.map((segment) => segment+`\\b[\\s\\S]*?`).join('');
