@@ -10,6 +10,19 @@ import gulp from "gulp";
 
 const pipeline = promisify(Stream.pipeline);
 
+function checkExt(ext, extension) {
+    if (typeof extension === 'string') {
+        return ext === '.' + extension.replace(/^\./, '');
+    }
+    if (Array.isArray(extension)) {
+        return extension.includes(ext.toLowerCase());
+    }
+    if (extension instanceof RegExp) {
+        return extension.test(ext);
+    }
+    throw new Error('расширение должно быть string или RegExp');
+}
+
 function renameAndTrack(renameMap, { 
     distDir = 'dist', 
     extension = 'html'
@@ -18,7 +31,10 @@ function renameAndTrack(renameMap, {
         try {
             const ext = path.extname(file.path);
 
-            if (!file.isBuffer() || !ext.match(extension)) {
+            console.log('Файл:', file.path, 'ext:', ext, 'match:', checkExt(ext, extension));
+            console.log('isBuffer:', file.isBuffer(), 'size:', file.contents?.length);
+
+            if (!file.isBuffer() || !checkExt(ext, extension)) {
                 this.push(file);
                 return cb();
             }
@@ -26,11 +42,11 @@ function renameAndTrack(renameMap, {
             const oldPath = file.relative;
             let newName;
 
-            if ('html'.match(extension)) {
-                newName = 'index.html';
-
+            if (checkExt(ext, 'html')) {
                 if (oldPath !== 'index.html') {
                     newName = faker.number.hex({min: 0, max: 65535}) + ext;
+                } else {
+                    newName = 'index.html';
                 }
             }
             else {
@@ -51,15 +67,8 @@ function renameAndTrack(renameMap, {
                     }
                 });
             }
-            try {
-                await writeFile(newAbsPath, file.contents);
-            } catch (err) {
-                //создает все промежуточные папки для успешной записи если они были в срц
-                const dir = path.dirname(newAbsPath);
-                await mkdir(dir, {recursive: true});
-                await writeFile(newAbsPath, file.contents);
-                console.log(`создал файл с подпапками ${newAbsPath}`);
-            }
+            await mkdir(path.dirname(newAbsPath), { recursive: true });
+            await writeFile(newAbsPath, file.contents);
 
             renameMap.set(
                 path.posix.normalize(file.relative.replace(/\\/g, '/')),
@@ -103,6 +112,41 @@ export const renameHTML = async () => {
     await pipeline(
         gulp.src('./src/*.html'),
         renameAndTrack(renameMap, {distDir: './dist'})
+    )
+
+    await pipeline(
+        gulp.src('./dist/*.html'),
+        replaceReferences(renameMap),
+        gulp.dest('./dist')
+    )
+}
+
+export const renameCSS = async () => {
+    const renameMap = new Map();
+
+    await pipeline(
+        gulp.src('src/{style,styles,css,scss}/*.css'),
+        renameAndTrack(renameMap, {distDir: './dist', extension: 'css'})
+    )
+
+    await pipeline(
+        gulp.src('./dist/*.html'),
+        replaceReferences(renameMap),
+        gulp.dest('./dist')
+    )
+}
+
+export const renameIMG = async () => {
+    const renameMap = new Map();
+
+    //разбиваю потоки для обработки ВСЕХ файлов(в одном потоке не все файлы проходят)
+    await pipeline(
+        gulp.src('src/{assets,images,img}/**/*.png', {encoding: false}),
+        renameAndTrack(renameMap, {distDir: './dist', extension: 'png'})
+    )
+    await pipeline(
+        gulp.src('src/{assets,images,img}/**/*.svg', {encoding: false}),
+        renameAndTrack(renameMap, {distDir: './dist', extension: 'svg'})
     )
 
     await pipeline(
